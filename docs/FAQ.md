@@ -29,7 +29,7 @@ For salaried employees this matches your payslip at the end of the month. For ho
 
 Currently PayPulse supports one monthly salary at a time. Workarounds:
 - Change it in Settings when your raise kicks in. Past months will use the new rate unless you export → edit JSON → import.
-- Upvote [issue #todo](../../issues) for multi-period salary support.
+- If this matters to you, open or upvote an issue in the repo for multi-period salary support.
 
 ## I have bi-weekly / weekly pay, not monthly.
 
