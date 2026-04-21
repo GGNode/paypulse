@@ -176,14 +176,14 @@ def compute_now(cfg: dict):
     else:
         start_date = today
 
-        if today < start_date:
-            return 0.0, 0.0, "not_yet", daily
-        if not is_work_day(today, holiday_set, makeup_set):
-            status = "weekend" if today.weekday() >= 5 else "holiday"
-            month_earned = _month_so_far(
-                cfg, today, 0.0, daily, holiday_set, makeup_set, start_date
-            )
-            return 0.0, month_earned, status, daily
+    if today < start_date:
+        return 0.0, 0.0, "not_yet", daily
+    if not is_work_day(today, holiday_set, makeup_set):
+        status = "weekend" if today.weekday() >= 5 else "holiday"
+        month_earned = _month_so_far(
+            cfg, today, 0.0, daily, holiday_set, makeup_set, start_date
+        )
+        return 0.0, month_earned, status, daily
 
     worked_sec = 0
     if now > ws:
@@ -205,10 +205,10 @@ def compute_now(cfg: dict):
     else:
         status = "working"
 
-        month_earned = _month_so_far(
-            cfg, today, today_earned, daily, holiday_set, makeup_set, start_date
-        )
-        return today_earned, month_earned, status, daily
+    month_earned = _month_so_far(
+        cfg, today, today_earned, daily, holiday_set, makeup_set, start_date
+    )
+    return today_earned, month_earned, status, daily
 
 
 def _month_so_far(cfg, today, today_earned, daily,

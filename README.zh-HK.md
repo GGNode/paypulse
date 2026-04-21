@@ -33,7 +33,7 @@
 <table>
 <tr>
 <td align="center" width="33%">
-<img src="./assets/home-hero-en.png" alt="首頁 — 秒級跳動"><br>
+<img src="./assets/home-hero-zh.png" alt="首頁 — 秒級跳動（HKD）"><br>
 <b>秒級跳動</b><br>
 <sub>大個數字每秒跳，下面係日薪進度條、放工倒數同下個假期。</sub>
 </td>
