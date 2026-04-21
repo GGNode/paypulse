@@ -14,7 +14,7 @@
 
 [🇬🇧 English](./README.md) · [🇨🇳 简体中文](./README.zh-CN.md) · [🇭🇰 繁體中文](./README.zh-HK.md)
 
-[**線上試用**](https://your-username.github.io/paypulse/) · [**文件**](./docs/) · [**報 Bug**](https://github.com/your-username/paypulse/issues)
+[**線上試用**](https://ggnode.github.io/paypulse/) · [**文件**](./docs/) · [**報 Bug**](https://github.com/GGNode/paypulse/issues)
 
 </div>
 
@@ -74,7 +74,7 @@
 ### 瀏覽器直接開
 
 ```bash
-git clone https://github.com/your-username/paypulse.git
+git clone https://github.com/GGNode/paypulse.git
 cd paypulse
 open index.html
 ```
@@ -91,7 +91,7 @@ open index.html
 
 ### 線上試用
 
-👉 [your-username.github.io/paypulse](https://your-username.github.io/paypulse/)
+👉 [ggnode.github.io/paypulse](https://ggnode.github.io/paypulse/)
 
 ### macOS 桌面部件（可選）
 

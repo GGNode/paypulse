@@ -14,7 +14,7 @@
 
 [🇬🇧 English](./README.md) · [🇨🇳 简体中文](./README.zh-CN.md) · [🇭🇰 繁體中文](./README.zh-HK.md)
 
-[**Live Demo**](https://your-username.github.io/paypulse/) · [**Docs**](./docs/) · [**Report a Bug**](https://github.com/your-username/paypulse/issues)
+[**Live Demo**](https://ggnode.github.io/paypulse/) · [**Docs**](./docs/) · [**Report a Bug**](https://github.com/GGNode/paypulse/issues)
 
 </div>
 
@@ -72,7 +72,7 @@ No backend, no build step, no account. Just a single `index.html` that you open 
 ### In a browser
 
 ```bash
-git clone https://github.com/your-username/paypulse.git
+git clone https://github.com/GGNode/paypulse.git
 cd paypulse
 open index.html          # macOS
 xdg-open index.html      # Linux
@@ -91,7 +91,7 @@ First time you open it, a short setup wizard appears and asks for your salary, r
 
 ### Live demo
 
-👉 [your-username.github.io/paypulse](https://your-username.github.io/paypulse/)
+👉 [ggnode.github.io/paypulse](https://ggnode.github.io/paypulse/)
 
 ### macOS desktop widget (optional)
 
