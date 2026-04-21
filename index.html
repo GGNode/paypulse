@@ -1,0 +1,3207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>💰 PayPulse — Your salary, ticking live</title>
+<meta name="description" content="Watch your paycheck tick up in real time. 100% local. Multi-language, multi-currency, pluggable tax & pension rules." />
+<style>
+  :root, [data-theme="dark"] {
+    --bg-1:#0f0c29; --bg-2:#302b63; --bg-3:#24243e;
+    --gold:#ffd700; --gold-glow:#ffb700;
+    --green:#00e676; --red:#ff5252; --blue:#64b5f6; --pink:#f48fb1;
+    --text:#f5f5f5; --muted:#9aa0b4;
+    --card:rgba(255,255,255,0.06); --card-solid:#1a1735;
+    --card-border:rgba(255,255,255,0.12);
+    --input-bg:rgba(0,0,0,0.28);
+    --table-row:rgba(255,255,255,0.03); --table-row-alt:rgba(255,255,255,0.06);
+  }
+  [data-theme="light"] {
+    --bg-1:#fef6e4; --bg-2:#e6f4f1; --bg-3:#f3d2c1;
+    --gold:#b8860b; --gold-glow:#daa520;
+    --green:#0a8f40; --red:#d32f2f; --blue:#1565c0; --pink:#c2185b;
+    --text:#2b2d42; --muted:#6b7280;
+    --card:rgba(255,255,255,0.75); --card-solid:#ffffff;
+    --card-border:rgba(0,0,0,0.08);
+    --input-bg:rgba(0,0,0,0.04);
+    --table-row:rgba(0,0,0,0.02); --table-row-alt:rgba(0,0,0,0.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{
+    min-height:100%;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","PingFang HK","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    color:var(--text);
+    background:linear-gradient(135deg,var(--bg-1),var(--bg-2),var(--bg-3));
+    background-size:300% 300%;
+    animation:bgFlow 25s ease infinite;
+    -webkit-font-smoothing:antialiased;
+  }
+  @keyframes bgFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px 16px 60px}
+  header{text-align:center;margin-bottom:18px}
+  header h1{
+    font-size:32px;font-weight:800;letter-spacing:1px;
+    background:linear-gradient(90deg,var(--gold-glow),var(--gold),var(--gold-glow));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  header .subtitle{margin-top:6px;font-size:13px;color:var(--muted);letter-spacing:0.5px}
+  .topbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:12px;align-items:center}
+  .topbar select{
+    padding:6px 10px;background:var(--card);color:var(--text);
+    border:1px solid var(--card-border);border-radius:999px;
+    font-size:12px;font-family:inherit;outline:none;cursor:pointer;
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:7px 14px;border-radius:999px;
+    background:var(--card);border:1px solid var(--card-border);
+    font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;
+  }
+  .chip.working{color:var(--green);border-color:rgba(0,230,118,0.4)}
+  .chip.resting{color:#ffb74d;border-color:rgba(255,183,77,0.4)}
+  .chip.offwork{color:var(--blue);border-color:rgba(100,181,246,0.4)}
+  .chip.holiday{color:var(--pink);border-color:rgba(244,143,177,0.4)}
+  .chip strong{color:var(--text);font-weight:700}
+
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  @media(max-width:720px){.cards{grid-template-columns:1fr}}
+  .card{
+    background:var(--card);border:1px solid var(--card-border);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border-radius:18px;padding:20px 22px;position:relative;overflow:hidden;
+  }
+  .card .label{color:var(--muted);font-size:13px;letter-spacing:0.5px;display:flex;align-items:center;gap:6px}
+  .amount{
+    margin-top:10px;font-size:42px;font-weight:800;font-variant-numeric:tabular-nums;
+    color:var(--gold);text-shadow:0 0 24px rgba(255,215,0,0.25);
+    line-height:1.15;word-break:break-all;
+  }
+  .amount.big{font-size:54px}
+  .amount.pos{color:var(--green);text-shadow:0 0 24px rgba(0,230,118,0.25)}
+  .amount.neg{color:var(--red);text-shadow:0 0 24px rgba(255,82,82,0.25)}
+  .sub{margin-top:8px;font-size:13px;color:var(--muted)}
+  .progress{margin-top:14px;height:8px;background:rgba(128,128,128,0.15);border-radius:999px;overflow:hidden}
+  .progress>div{height:100%;background:linear-gradient(90deg,var(--gold-glow),var(--gold));transition:width .3s ease}
+  .progress.green>div{background:linear-gradient(90deg,#43a047,var(--green))}
+
+  .stock-input-wrap{margin-top:10px;display:flex;gap:8px;align-items:center}
+  .stock-input-wrap input[type="number"]{
+    flex:1;padding:10px 12px;background:var(--input-bg);border:1px solid var(--card-border);
+    border-radius:10px;color:var(--text);font-size:18px;font-weight:700;
+    font-variant-numeric:tabular-nums;outline:none;font-family:inherit;
+  }
+  .stock-input-wrap input[type="number"]:focus{border-color:var(--gold)}
+  .stock-input-wrap input[type="text"]{
+    flex:1;padding:10px 12px;background:var(--input-bg);border:1px solid var(--card-border);
+    border-radius:10px;color:var(--text);font-size:13px;outline:none;font-family:inherit;
+  }
+
+  .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .meta.cols4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:640px){.meta.cols4{grid-template-columns:repeat(2,1fr)}}
+  .mcard{background:var(--card);border:1px solid var(--card-border);border-radius:14px;padding:14px 12px;text-align:center}
+  .mcard .ml{font-size:12px;color:var(--muted)}
+  .mcard .mv{font-size:20px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+
+  .chart-wrap{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:18px;margin-bottom:16px}
+  .chart-wrap h3{font-size:15px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .chart-wrap h3 .legend{font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+  .chart-wrap h3 .legend span{display:inline-flex;align-items:center;gap:4px}
+  .chart-wrap h3 .legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .chart-wrap svg{width:100%;display:block;height:240px}
+
+  .hist{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:18px;margin-bottom:16px}
+  .hist h3{font-size:15px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+  .hist .table-wrap{max-height:420px;overflow:auto;border-radius:10px}
+  table.records{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+  table.records thead th{
+    position:sticky;top:0;z-index:1;background:var(--card-solid);
+    padding:10px 8px;text-align:left;font-weight:600;
+    border-bottom:1px solid var(--card-border);
+    color:var(--muted);font-size:12px;letter-spacing:0.5px;
+  }
+  table.records td{padding:8px;border-bottom:1px solid var(--card-border)}
+  table.records tbody tr:nth-child(odd) td{background:var(--table-row)}
+  table.records tbody tr:nth-child(even) td{background:var(--table-row-alt)}
+  table.records tbody tr.today td{background:rgba(255,215,0,0.08)}
+  table.records .num{text-align:right;font-variant-numeric:tabular-nums}
+  table.records .pos{color:var(--green);font-weight:600}
+  table.records .neg{color:var(--red);font-weight:600}
+  table.records input.cell{
+    width:100px;text-align:right;background:transparent;border:1px solid transparent;
+    color:inherit;padding:4px 6px;border-radius:6px;font:inherit;font-variant-numeric:tabular-nums;
+  }
+  table.records input.cell:focus{border-color:var(--gold);background:var(--input-bg);outline:none}
+  table.records input.cell.note{width:140px;text-align:left}
+  table.records select.cell{background:var(--input-bg);border:1px solid var(--card-border);color:inherit;font:inherit;padding:4px 6px;border-radius:6px}
+  table.records td.weekend{color:var(--muted)}
+  table.records td.holiday{color:var(--pink)}
+
+  .section{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:20px;margin-bottom:16px}
+  .section h2{font-size:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+  .section h2 .toggle{cursor:pointer;font-size:12px;color:var(--muted);user-select:none;padding:4px 8px;border-radius:6px;border:1px solid var(--card-border)}
+  .section-body.collapsed{display:none}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+  @media(max-width:640px){.row{grid-template-columns:1fr}}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input[type="number"],input[type="date"],input[type="time"],input[type="text"],select{
+    width:100%;padding:10px 12px;background:var(--input-bg);border:1px solid var(--card-border);
+    border-radius:10px;color:var(--text);font-size:14px;font-variant-numeric:tabular-nums;
+    outline:none;font-family:inherit;
+  }
+  input:focus,select:focus{border-color:var(--gold)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .btn{padding:9px 16px;border-radius:10px;border:1px solid var(--card-border);
+    background:rgba(255,215,0,0.14);color:var(--gold);cursor:pointer;
+    font-size:13px;font-weight:600;transition:all .15s;font-family:inherit}
+  .btn:hover{background:rgba(255,215,0,0.26)}
+  .btn.secondary{background:rgba(128,128,128,0.12);color:var(--text)}
+  .btn.secondary:hover{background:rgba(128,128,128,0.22)}
+  .btn.danger{background:rgba(255,82,82,0.12);color:var(--red)}
+  .btn.danger:hover{background:rgba(255,82,82,0.22)}
+  .btn.primary{background:linear-gradient(135deg,var(--gold-glow),var(--gold));color:#1a1735;border:none;padding:12px 24px;font-size:15px}
+  .hint{font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px}
+  footer{text-align:center;margin-top:24px;font-size:12px;color:var(--muted);line-height:1.7}
+  footer a{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+
+  .tabs{
+    display:flex;gap:6px;padding:6px;margin:0 0 20px;
+    background:var(--card);border:1px solid var(--card-border);border-radius:12px;
+    position:sticky;top:8px;z-index:50;backdrop-filter:blur(10px);
+  }
+  .tab{flex:1;padding:10px 14px;border-radius:8px;cursor:pointer;text-align:center;
+    font-weight:600;font-size:14px;color:var(--muted);transition:all .15s;
+    user-select:none;border:none;background:transparent;font-family:inherit}
+  .tab:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+  .tab.active{background:rgba(255,215,0,0.18);color:var(--gold)}
+  [data-pages]{display:block}
+  [data-pages].tab-hidden{display:none!important}
+
+  .theme-toggle{
+    position:fixed;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;
+    background:var(--card-solid);border:1px solid var(--card-border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,0.2);z-index:100;
+  }
+
+  /* ============ Onboarding Wizard ============ */
+  .wizard-overlay{
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(15,12,41,0.85);backdrop-filter:blur(10px);
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .wizard-overlay.hidden{display:none}
+  .wizard-card{
+    background:var(--card-solid);border:1px solid var(--card-border);
+    border-radius:24px;padding:36px 32px;max-width:560px;width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);max-height:90vh;overflow:auto;
+  }
+  .wizard-progress{display:flex;gap:6px;margin-bottom:24px}
+  .wizard-progress .dot{
+    flex:1;height:4px;border-radius:2px;background:rgba(128,128,128,0.25);
+    transition:background .3s;
+  }
+  .wizard-progress .dot.active{background:var(--gold)}
+  .wizard-card h2{font-size:22px;margin-bottom:6px;letter-spacing:0.5px}
+  .wizard-card .step-desc{color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6}
+  .wizard-card .step-content{min-height:180px}
+  .wizard-card .wizard-footer{display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap}
+  .wizard-card .wizard-footer > div{display:flex;gap:8px;flex-wrap:wrap}
+  .wizard-skip{
+    position:absolute;top:14px;right:18px;color:var(--muted);
+    background:none;border:none;cursor:pointer;font-size:12px;font-family:inherit;
+  }
+  .wizard-card{position:relative}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .choice{
+    padding:14px;border-radius:12px;border:1px solid var(--card-border);
+    background:var(--card);cursor:pointer;text-align:left;
+    font-size:14px;color:var(--text);font-family:inherit;transition:all .15s;
+  }
+  .choice:hover{border-color:var(--gold)}
+  .choice.active{border-color:var(--gold);background:rgba(255,215,0,0.12)}
+  .choice .big-label{font-weight:700;font-size:15px;margin-bottom:2px}
+  .choice .big-sub{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ============ Onboarding Wizard ============ -->
+<div id="wizard" class="wizard-overlay hidden">
+  <div class="wizard-card">
+    <button class="wizard-skip" id="wizardSkip" data-i18n="wizard.skip">Skip setup</button>
+    <div class="wizard-progress">
+      <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div>
+    </div>
+    <div id="wizardStep"></div>
+    <div class="wizard-footer">
+      <div>
+        <button class="btn secondary" id="wizardBack" data-i18n="wizard.back">← Back</button>
+      </div>
+      <div>
+        <button class="btn primary" id="wizardNext" data-i18n="wizard.next">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header>
+    <h1>💰 PayPulse</h1>
+    <div class="subtitle" data-i18n="app.subtitle">Your salary, ticking live</div>
+    <div class="topbar">
+      <select id="langSel" title="Language"></select>
+      <select id="currencySel" title="Currency"></select>
+      <select id="regionSel" title="Region"></select>
+      <span id="status" class="chip" data-i18n="status.loading">Loading…</span>
+      <span id="countdown" class="chip">⏰ —</span>
+      <span id="holidayCd" class="chip">🏖️ —</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="home" data-i18n="tab.home">🏠 Home</button>
+    <button class="tab" data-tab="details" data-i18n="tab.details">📊 Details</button>
+    <button class="tab" data-tab="settings" data-i18n="tab.settings">⚙️ Settings</button>
+  </nav>
+
+  <div class="cards" data-pages="home details">
+    <div class="card">
+      <div class="label"><span data-i18n="card.todaySalary">💼 Earned today</span></div>
+      <div id="todaySalary" class="amount">—</div>
+      <div id="todaySalarySub" class="sub">—</div>
+      <div class="progress"><div id="todayBar" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="label"><span data-i18n="card.todayStock">📈 Side P&amp;L today (optional)</span></div>
+      <div id="todayStock" class="amount">—</div>
+      <div class="stock-input-wrap">
+        <input id="todayStockInput" type="number" step="0.01" data-i18n-placeholder="card.stockPlaceholder" placeholder="Enter amount, negative for loss" />
+      </div>
+      <div class="stock-input-wrap">
+        <input id="todayStockNote" type="text" data-i18n-placeholder="card.notePlaceholder" placeholder="Optional note" />
+      </div>
+    </div>
+  </div>
+
+  <div class="cards" data-pages="home details">
+    <div class="card">
+      <div class="label"><span data-i18n="card.todayTotal">🪙 Today total</span></div>
+      <div id="todayTotal" class="amount big">—</div>
+      <div id="todayTotalSub" class="sub">—</div>
+    </div>
+    <div class="card">
+      <div class="label"><span data-i18n="card.goalAmount">🎯 Annual goal progress</span></div>
+      <div id="goalAmount" class="amount">—</div>
+      <div id="goalSub" class="sub">—</div>
+      <div class="progress green"><div id="goalBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="cards" data-pages="home details">
+    <div class="card">
+      <div class="label"><span data-i18n="card.monthTotal">📆 This month</span></div>
+      <div id="monthTotal" class="amount">—</div>
+      <div id="monthSub" class="sub">—</div>
+      <div class="progress"><div id="monthBar" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="label"><span data-i18n="card.grandTotal">🏆 Since start date</span></div>
+      <div id="grandTotal" class="amount">—</div>
+      <div id="grandSub" class="sub">—</div>
+    </div>
+  </div>
+
+  <div class="cards" data-pages="details">
+    <div class="card">
+      <div class="label"><span data-i18n="card.monthAsset">💎 Monthly asset growth</span></div>
+      <div id="monthAsset" class="amount pos">—</div>
+      <div id="monthAssetSub" class="sub">—</div>
+    </div>
+    <div class="card">
+      <div class="label"><span data-i18n="card.bonusNet">🎁 Year-end bonus (after tax)</span></div>
+      <div id="bonusNet" class="amount pos">—</div>
+      <div id="bonusNetSub" class="sub">—</div>
+    </div>
+  </div>
+
+  <div class="cards" data-pages="details">
+    <div class="card">
+      <div class="label"><span data-i18n="card.annualAsset">💎 Annual asset growth</span></div>
+      <div id="annualAsset" class="amount big pos">—</div>
+      <div id="annualAssetSub" class="sub">—</div>
+    </div>
+  </div>
+
+  <div class="meta cols4" data-pages="home details">
+    <div class="mcard"><div class="ml" data-i18n="stat.gross">💼 Gross / mo</div><div id="mGross" class="mv">—</div></div>
+    <div class="mcard"><div class="ml" data-i18n="stat.pension">🏦 Pension / mo</div><div id="mMpf" class="mv" style="color:var(--blue)">—</div></div>
+    <div class="mcard"><div class="ml" data-i18n="stat.taxMonth">🧾 Tax / mo</div><div id="mTaxMonthly" class="mv" style="color:var(--pink)">—</div></div>
+    <div class="mcard"><div class="ml" data-i18n="stat.netMonth">💎 Net asset / mo</div><div id="mNet" class="mv" style="color:var(--green)">—</div></div>
+  </div>
+
+  <div class="meta" data-pages="home details">
+    <div class="mcard"><div class="ml" data-i18n="stat.hourly">⏱️ Hourly</div><div id="hourly" class="mv">—</div></div>
+    <div class="mcard"><div class="ml" data-i18n="stat.daily">📅 Daily</div><div id="daily" class="mv">—</div></div>
+    <div class="mcard"><div class="ml" data-i18n="stat.perSec">🚀 Per second</div><div id="perSec" class="mv">—</div></div>
+  </div>
+
+  <div class="chart-wrap" data-pages="details">
+    <h3>
+      <span data-i18n="chart.title">📊 Cumulative earnings</span>
+      <span class="legend">
+        <span><i style="background:#ffd700"></i><span data-i18n="chart.legend.salary">Salary</span></span>
+        <span><i style="background:#64b5f6"></i><span data-i18n="chart.legend.side">Side</span></span>
+        <span><i style="background:#f48fb1"></i><span data-i18n="chart.legend.total">Total</span></span>
+      </span>
+    </h3>
+    <svg id="chart" viewBox="0 0 800 240" preserveAspectRatio="none"></svg>
+  </div>
+
+  <div class="hist" data-pages="details">
+    <h3>
+      <span data-i18n="hist.title">📜 Daily records (editable)</span>
+      <span id="histSummary" class="legend" style="font-size:12px;color:var(--muted)">—</span>
+    </h3>
+    <div class="table-wrap">
+      <table class="records">
+        <thead>
+          <tr>
+            <th data-i18n="hist.col.date">Date</th>
+            <th data-i18n="hist.col.weekday">Day</th>
+            <th class="num" data-i18n="hist.col.salary">Salary</th>
+            <th class="num" data-i18n="hist.col.side">Side P&amp;L</th>
+            <th data-i18n="hist.col.note">Note</th>
+            <th data-i18n="hist.col.type">Type</th>
+            <th class="num" data-i18n="hist.col.total">Total</th>
+          </tr>
+        </thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+    <div class="hint" data-i18n="hist.hint">💡 Type: <b>Normal</b> = regular workday; <b>Leave</b> = no pay this day; <b>Extra</b> = pay for a non-workday.</div>
+  </div>
+
+  <div class="section" data-pages="details">
+    <h2>
+      <span data-i18n="tax.sectionTitle">💸 Tax &amp; Pension breakdown</span>
+      <span class="toggle" data-toggle="taxBody" data-i18n="common.toggle">Expand/collapse</span>
+    </h2>
+    <div id="taxBody" class="section-body">
+      <div id="taxConfigPanel"></div>
+      <h4 style="margin:16px 0 10px;font-size:14px;color:var(--muted)" data-i18n="tax.breakdownTitle">📊 Calculation breakdown</h4>
+      <div class="table-wrap" style="max-height:none">
+        <table class="records"><tbody id="taxBreakdown"></tbody></table>
+      </div>
+      <div class="hint" id="taxHint"></div>
+    </div>
+  </div>
+
+  <div class="section" data-pages="settings">
+    <h2>
+      <span data-i18n="settings.title">⚙️ Settings</span>
+      <span class="toggle" data-toggle="settingsBody" data-i18n="common.toggle">Expand/collapse</span>
+    </h2>
+    <div id="settingsBody" class="section-body">
+      <div class="row">
+        <div><label data-i18n="settings.salary">Monthly salary (gross)</label><input id="salary" type="number" min="0" step="100" /></div>
+        <div><label data-i18n="settings.bonusMonths">Year-end bonus (number of months)</label><input id="bonusMonths" type="number" min="0" step="0.5" /></div>
+      </div>
+      <div class="row">
+        <div><label data-i18n="settings.startDate">Start date</label><input id="startDate" type="date" /></div>
+        <div><label data-i18n="settings.yearlyGoal">Annual income goal</label><input id="yearlyGoal" type="number" min="0" step="10000" /></div>
+      </div>
+      <div class="row">
+        <div><label data-i18n="settings.workStart">Work start</label><input id="workStart" type="time" /></div>
+        <div><label data-i18n="settings.workEnd">Work end</label><input id="workEnd" type="time" /></div>
+      </div>
+      <div class="row">
+        <div><label data-i18n="settings.lunchStart">Lunch start</label><input id="lunchStart" type="time" /></div>
+        <div><label data-i18n="settings.lunchEnd">Lunch end</label><input id="lunchEnd" type="time" /></div>
+      </div>
+      <div class="row">
+        <div><label data-i18n="settings.taxProvider">Tax calculation method</label><select id="taxProviderSel"></select></div>
+        <div><label data-i18n="settings.pensionProvider">Pension / retirement fund</label><select id="pensionProviderSel"></select></div>
+      </div>
+      <div id="pensionConfigPanel"></div>
+      <div class="row">
+        <div><label data-i18n="settings.fxRate">Exchange rate (multiplier on salary for display)</label><input id="fxRate" type="number" min="0" step="0.0001" /></div>
+        <div><label data-i18n="settings.decimals">Decimals</label>
+          <select id="decimals">
+            <option value="0">0</option><option value="2" selected>2</option><option value="4">4</option>
+          </select>
+        </div>
+      </div>
+      <div class="btns">
+        <button class="btn" id="saveBtn" data-i18n="settings.save">💾 Save</button>
+        <button class="btn secondary" id="exportBtn" data-i18n="settings.export">📤 Export</button>
+        <button class="btn secondary" id="importBtn" data-i18n="settings.import">📥 Import</button>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+        <button class="btn secondary" id="resetBtn" data-i18n="settings.reset">♻️ Reset settings</button>
+        <button class="btn secondary" id="rerunWizardBtn" data-i18n="settings.rerunWizard">🪄 Re-run wizard</button>
+        <button class="btn danger" id="clearBtn" data-i18n="settings.clear">🗑️ Clear all data</button>
+      </div>
+      <div class="hint" id="settingsHint"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div data-i18n="footer.privacy">🔒 100% local. No tracking, no accounts, no cloud.</div>
+    <div style="margin-top:4px">
+      <a href="https://github.com/your-username/paypulse" target="_blank">GitHub</a> ·
+      <a href="https://github.com/your-username/paypulse/blob/main/docs/FAQ.md" target="_blank">FAQ</a> ·
+      <a href="https://github.com/your-username/paypulse/blob/main/docs/privacy.md" target="_blank">Privacy</a>
+    </div>
+  </footer>
+
+</div>
+
+<div class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</div>
+
+<script>
+/* =========================================================
+ *  PayPulse — single-file salary ticker
+ *  License: MIT
+ *  https://github.com/your-username/paypulse
+ * ========================================================= */
+
+/* ============ 1. i18n dictionary ============ */
+const I18N = {
+  'en': {
+    _name: 'English', _flag: '🇬🇧',
+    'app.subtitle': 'Your salary, ticking live',
+    'tab.home': '🏠 Home', 'tab.details': '📊 Details', 'tab.settings': '⚙️ Settings',
+    'status.loading': 'Loading…',
+    'status.beforeStart': '🗓️ Before start date',
+    'status.leave': '🏝️ On leave (no pay)',
+    'status.weekend': '🛌 Weekend',
+    'status.holiday': '🏖️ Public holiday: {name}',
+    'status.beforeWork': '☕ Before work',
+    'status.working': '💼 Working… numbers ticking 📈',
+    'status.lunch': '🍜 Lunch break',
+    'status.afterWork': '🎉 Done for today',
+    'cd.toWork': 'to work', 'cd.toLunch': 'to lunch',
+    'cd.toAfterLunch': 'to afternoon', 'cd.toEnd': 'to end of day',
+    'cd.doneToday': 'done for today', 'cd.toNextWork': 'to next workday',
+    'holiday.none': '🏖️ No upcoming holidays this year',
+    'holiday.next': '🏖️ Next {name} ({date}, in {days}d)',
+    'card.todaySalary': '💼 Earned today',
+    'card.todaySalarySub': 'Daily {daily} ({progress}% done)',
+    'card.todayStock': '📈 Side P&L today (optional)',
+    'card.stockPlaceholder': 'Amount, negative for loss',
+    'card.notePlaceholder': 'Optional note',
+    'card.todayTotal': '🪙 Today total',
+    'card.todayTotalSub': 'Salary {salary} + side {side}',
+    'card.goalAmount': '🎯 Annual goal progress',
+    'card.goalSub': 'Progress {pct}% ｜ {eta}',
+    'card.goalEtaDone': '🎉 Goal reached!',
+    'card.goalEtaRemain': '{remain} to go (~{days} workdays)',
+    'card.goalEtaNoGoal': 'No goal set',
+    'card.monthTotal': '📆 This month',
+    'card.monthSub': 'Salary {salary} + side {side} (salary {pct}%)',
+    'card.grandTotal': '🏆 Since start date',
+    'card.grandSub': 'Salary {salary} + side {side}, ~{days} workdays',
+    'card.monthAsset': '💎 Monthly asset growth',
+    'card.monthAssetSub': 'Cash {cash} + pension {pension}',
+    'card.bonusNet': '🎁 Year-end bonus (after tax)',
+    'card.bonusNetSub': '{months} months × salary = {bonus}, marginal tax {tax}',
+    'card.bonusNotSet': 'No bonus set (see Settings)',
+    'card.annualAsset': '💎 Annual asset growth',
+    'card.annualAssetSub': 'Cash {cash} + pension {pension} (effective tax {rate}%)',
+    'stat.gross': '💼 Gross / mo', 'stat.pension': '🏦 Pension / mo',
+    'stat.taxMonth': '🧾 Tax / mo', 'stat.netMonth': '💎 Net asset / mo',
+    'stat.hourly': '⏱️ Hourly', 'stat.daily': '📅 Daily', 'stat.perSec': '🚀 Per second',
+    'chart.title': '📊 Cumulative earnings',
+    'chart.legend.salary': 'Salary', 'chart.legend.side': 'Side', 'chart.legend.total': 'Total',
+    'chart.empty': 'No data yet — set your start date',
+    'hist.title': '📜 Daily records (editable)',
+    'hist.col.date': 'Date', 'hist.col.weekday': 'Day',
+    'hist.col.salary': 'Salary', 'hist.col.side': 'Side P&L',
+    'hist.col.note': 'Note', 'hist.col.type': 'Type', 'hist.col.total': 'Total',
+    'hist.type.normal': 'Workday', 'hist.type.leave': 'Leave', 'hist.type.extra': 'Extra',
+    'hist.today': 'today',
+    'hist.hint': '💡 <b>Normal</b> = regular workday; <b>Leave</b> = no pay; <b>Extra</b> = paid non-workday.',
+    'hist.summary': '{count} days ｜ salary {salary} ｜ side {side} ｜ total {total}',
+    'weekdays': ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    'tax.sectionTitle': '💸 Tax & Pension breakdown',
+    'tax.breakdownTitle': '📊 Calculation breakdown',
+    'tax.hint': 'This is an estimate for personal reference, not official tax advice.',
+    'tax.noneHint': 'Tax calculation is disabled. Set a tax provider to see breakdown.',
+    'tax.save': '💾 Save tax settings',
+    'tax.rowGross12': '12 months salary',
+    'tax.rowBonus': 'Year-end bonus ({months} months)',
+    'tax.rowAnnualIncome': 'Annual income',
+    'tax.rowDeductions': '➖ Deductions',
+    'tax.rowDeductTotal': 'Total deductions',
+    'tax.rowNetAssessable': 'Net assessable income',
+    'tax.rowAllowances': '➖ Allowances',
+    'tax.rowAllowTotal': 'Total allowances',
+    'tax.rowTaxable': 'Taxable income',
+    'tax.rowTaxCalc': '🧮 Tax calculation',
+    'tax.rowTaxFinal': '✅ Tax payable',
+    'tax.rowEffective': 'Effective rate',
+    'tax.rowMarginal': 'Marginal rate',
+    'settings.title': '⚙️ Settings',
+    'settings.salary': 'Monthly salary (gross)',
+    'settings.bonusMonths': 'Year-end bonus (number of months)',
+    'settings.startDate': 'Start date',
+    'settings.workStart': 'Work start', 'settings.workEnd': 'Work end',
+    'settings.lunchStart': 'Lunch start', 'settings.lunchEnd': 'Lunch end',
+    'settings.yearlyGoal': 'Annual income goal',
+    'settings.fxRate': 'Exchange rate (display multiplier)',
+    'settings.decimals': 'Decimals',
+    'settings.taxProvider': 'Tax calculation method',
+    'settings.pensionProvider': 'Pension / retirement fund',
+    'settings.save': '💾 Save',
+    'settings.export': '📤 Export',
+    'settings.import': '📥 Import',
+    'settings.reset': '♻️ Reset settings',
+    'settings.rerunWizard': '🪄 Re-run wizard',
+    'settings.clear': '🗑️ Clear all data',
+    'settings.hint': '💾 All data is stored in your browser\'s localStorage. Use Export/Import to transfer.',
+    'settings.saved': '✅ Saved',
+    'settings.confirmReset': 'Reset settings to defaults? Daily records are kept.',
+    'settings.confirmClear': '⚠️ Clear all daily records (side P&L, notes, leave markers)? Settings are kept.',
+    'settings.confirmImport': 'Import will overwrite current settings and records. Continue?',
+    'settings.importOk': '✅ Import successful',
+    'settings.importFail': '❌ Import failed: {err}',
+    'settings.importBadFormat': 'Bad file format',
+    'common.toggle': 'Expand/collapse',
+    'footer.privacy': '🔒 100% local. No tracking, no accounts, no cloud.',
+    'wizard.title1': 'Welcome to PayPulse',
+    'wizard.desc1': 'Watch your paycheck tick up in real time. 5 quick questions and you\'re done.',
+    'wizard.title2': 'Where do you work?',
+    'wizard.desc2': 'This sets default currency, tax method, pension, and holidays. You can change anything later.',
+    'wizard.title3': 'Your salary',
+    'wizard.desc3': 'How much do you earn per month, gross?',
+    'wizard.title4': 'Your schedule',
+    'wizard.desc4': 'When do you work? Defaults are 9:00-18:00 with a 1-hour lunch.',
+    'wizard.title5': 'You\'re all set! 🎉',
+    'wizard.desc5': 'Your data lives only on this device. Start watching your salary tick 📈',
+    'wizard.salary.label': 'Monthly salary',
+    'wizard.bonus.label': 'Year-end bonus (months, 0 if none)',
+    'wizard.startDate.label': 'Start date (when did/will you begin?)',
+    'wizard.goal.label': 'Annual income goal (optional)',
+    'wizard.next': 'Next →', 'wizard.back': '← Back',
+    'wizard.finish': 'Start watching 💸', 'wizard.skip': 'Skip setup',
+    'tvc.title': '🔮 What-if: voluntary pension contribution (tax saving)',
+    'tvc.col.contribution': 'Contribution',
+    'tvc.col.saved': 'Tax saved',
+    'tvc.col.yield': 'Return rate',
+    'tvc.current': '← current',
+    'tvc.hint': '💡 Your marginal tax rate is ~<b>{rate}%</b>. Every 1 of voluntary contribution saves you <b>{saved}</b> in tax.',
+  },
+  'zh-CN': {
+    _name: '简体中文', _flag: '🇨🇳',
+    'app.subtitle': '看着工资秒秒上涨',
+    'tab.home': '🏠 首页', 'tab.details': '📊 详细', 'tab.settings': '⚙️ 设置',
+    'status.loading': '加载中…',
+    'status.beforeStart': '🗓️ 还未到开始日期',
+    'status.leave': '🏝️ 今日请假（不发工资）',
+    'status.weekend': '🛌 周末休息',
+    'status.holiday': '🏖️ 公众假期：{name}',
+    'status.beforeWork': '☕ 还没上班',
+    'status.working': '💼 搬砖中…数字在跳 📈',
+    'status.lunch': '🍜 午休中',
+    'status.afterWork': '🎉 今日已下班',
+    'cd.toWork': '距离上班', 'cd.toLunch': '距离午休',
+    'cd.toAfterLunch': '距离下午开工', 'cd.toEnd': '距离下班',
+    'cd.doneToday': '今日已下班', 'cd.toNextWork': '距离下次上班',
+    'holiday.none': '🏖️ 今年没有更多假期了',
+    'holiday.next': '🏖️ 下个假期 {name}（{date}，还有 {days} 天）',
+    'card.todaySalary': '💼 今日已赚',
+    'card.todaySalarySub': '日薪 {daily}（进度 {progress}%）',
+    'card.todayStock': '📈 今日副业/股市（可选填）',
+    'card.stockPlaceholder': '金额，亏损填负数',
+    'card.notePlaceholder': '可选备注',
+    'card.todayTotal': '🪙 今日综合',
+    'card.todayTotalSub': '工资 {salary} + 副业 {side}',
+    'card.goalAmount': '🎯 年度目标进度',
+    'card.goalSub': '进度 {pct}% ｜ {eta}',
+    'card.goalEtaDone': '🎉 已达成！',
+    'card.goalEtaRemain': '还差 {remain}（约 {days} 个工作日）',
+    'card.goalEtaNoGoal': '未设置目标',
+    'card.monthTotal': '📆 本月综合',
+    'card.monthSub': '工资 {salary} + 副业 {side}（工资进度 {pct}%）',
+    'card.grandTotal': '🏆 累计（自开始日期）',
+    'card.grandSub': '工资 {salary} + 副业 {side}，共搬砖 {days} 天',
+    'card.monthAsset': '💎 每月资产增值',
+    'card.monthAssetSub': '现金 {cash} + 退休金 {pension}',
+    'card.bonusNet': '🎁 年终奖（税后资产）',
+    'card.bonusNetSub': '{months} 个月花红 = {bonus}，边际税 {tax}',
+    'card.bonusNotSet': '未设置年终奖（在设置中可填）',
+    'card.annualAsset': '💎 全年资产增值',
+    'card.annualAssetSub': '现金 {cash} + 退休金 {pension}（有效税率 {rate}%）',
+    'stat.gross': '💼 税前月薪', 'stat.pension': '🏦 退休金/月',
+    'stat.taxMonth': '🧾 税款/月', 'stat.netMonth': '💎 资产增值/月',
+    'stat.hourly': '⏱️ 时薪', 'stat.daily': '📅 日薪', 'stat.perSec': '🚀 秒薪',
+    'chart.title': '📊 累计收益走势',
+    'chart.legend.salary': '工资', 'chart.legend.side': '副业', 'chart.legend.total': '综合',
+    'chart.empty': '还没到开始日期，暂无数据',
+    'hist.title': '📜 每日记录（可直接修改）',
+    'hist.col.date': '日期', 'hist.col.weekday': '星期',
+    'hist.col.salary': '工资', 'hist.col.side': '副业盈亏',
+    'hist.col.note': '备注', 'hist.col.type': '类型', 'hist.col.total': '合计',
+    'hist.type.normal': '工作日', 'hist.type.leave': '请假', 'hist.type.extra': '加班',
+    'hist.today': '今天',
+    'hist.hint': '💡 <b>工作日</b>=正常上班；<b>请假</b>=不发工资；<b>加班</b>=非工作日按一天算。',
+    'hist.summary': '共 {count} 天 ｜ 工资 {salary} ｜ 副业 {side} ｜ 合计 {total}',
+    'weekdays': ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
+    'tax.sectionTitle': '💸 税务 & 退休金明细',
+    'tax.breakdownTitle': '📊 计算明细',
+    'tax.hint': '本计算仅供个人参考，不构成正式税务意见。',
+    'tax.noneHint': '已关闭税务计算。要查看明细请选择一个税务方案。',
+    'tax.save': '💾 保存税务设置',
+    'tax.rowGross12': '12 个月工资',
+    'tax.rowBonus': '年终奖（{months} 个月）',
+    'tax.rowAnnualIncome': '年度总收入',
+    'tax.rowDeductions': '➖ 可扣除项',
+    'tax.rowDeductTotal': '扣除合计',
+    'tax.rowNetAssessable': '净入息总额',
+    'tax.rowAllowances': '➖ 免税额',
+    'tax.rowAllowTotal': '免税额合计',
+    'tax.rowTaxable': '应课税入息',
+    'tax.rowTaxCalc': '🧮 税款计算',
+    'tax.rowTaxFinal': '✅ 应缴税款',
+    'tax.rowEffective': '有效税率',
+    'tax.rowMarginal': '边际税率',
+    'settings.title': '⚙️ 设置',
+    'settings.salary': '月薪（税前）',
+    'settings.bonusMonths': '年终奖（月数）',
+    'settings.startDate': '开始日期',
+    'settings.workStart': '上班时间', 'settings.workEnd': '下班时间',
+    'settings.lunchStart': '午休开始', 'settings.lunchEnd': '午休结束',
+    'settings.yearlyGoal': '年度收入目标',
+    'settings.fxRate': '汇率（显示时×该系数）',
+    'settings.decimals': '小数位',
+    'settings.taxProvider': '税务计算方案',
+    'settings.pensionProvider': '退休金方案',
+    'settings.save': '💾 保存',
+    'settings.export': '📤 导出数据',
+    'settings.import': '📥 导入数据',
+    'settings.reset': '♻️ 重置设置',
+    'settings.rerunWizard': '🪄 重新运行向导',
+    'settings.clear': '🗑️ 清空所有记录',
+    'settings.hint': '💾 数据存于浏览器 localStorage，跨设备请使用导出/导入。',
+    'settings.saved': '✅ 已保存',
+    'settings.confirmReset': '重置设置为默认？每日记录会保留。',
+    'settings.confirmClear': '⚠️ 清空所有每日记录（副业/备注/请假标记）？设置不会被清除。',
+    'settings.confirmImport': '导入将覆盖当前所有设置和记录，确定？',
+    'settings.importOk': '✅ 导入成功',
+    'settings.importFail': '❌ 导入失败：{err}',
+    'settings.importBadFormat': '文件格式不对',
+    'common.toggle': '展开/收起',
+    'footer.privacy': '🔒 100% 本地运行，不追踪、不联网、不上传',
+    'wizard.title1': '欢迎使用 PayPulse',
+    'wizard.desc1': '看着工资秒秒上涨。5 个问题搞定所有设置。',
+    'wizard.title2': '你在哪里工作？',
+    'wizard.desc2': '这会设置默认货币、税务方案、退休金和节假日。之后随时可改。',
+    'wizard.title3': '你的工资',
+    'wizard.desc3': '你每月税前能拿多少？',
+    'wizard.title4': '你的作息',
+    'wizard.desc4': '上下班时间是？默认 9:00–18:00，午休 1 小时。',
+    'wizard.title5': '设置完成！🎉',
+    'wizard.desc5': '数据全在本机 localStorage，开始看工资跳动吧 📈',
+    'wizard.salary.label': '月薪',
+    'wizard.bonus.label': '年终奖（月数，0 表示无）',
+    'wizard.startDate.label': '开始日期（你何时入职/开始计算？）',
+    'wizard.goal.label': '年度收入目标（可选）',
+    'wizard.next': '下一步 →', 'wizard.back': '← 上一步',
+    'wizard.finish': '开始搬砖 💸', 'wizard.skip': '跳过设置',
+    'tvc.title': '🔮 如果我自愿多交退休金（节税试算）',
+    'tvc.col.contribution': '自愿供款',
+    'tvc.col.saved': '节省税款',
+    'tvc.col.yield': '年化回报',
+    'tvc.current': '← 当前',
+    'tvc.hint': '💡 你的边际税率约 <b>{rate}%</b>。每自愿多供 1 元能省 <b>{saved}</b> 的税。',
+  },
+  'zh-HK': {
+    _name: '繁體中文', _flag: '🇭🇰',
+    'app.subtitle': '睇住份糧每秒跳動',
+    'tab.home': '🏠 首頁', 'tab.details': '📊 詳細', 'tab.settings': '⚙️ 設定',
+    'status.loading': '載入中…',
+    'status.beforeStart': '🗓️ 未到開始日期',
+    'status.leave': '🏝️ 今日放假（冇糧出）',
+    'status.weekend': '🛌 週末休息',
+    'status.holiday': '🏖️ 公眾假期：{name}',
+    'status.beforeWork': '☕ 仲未返工',
+    'status.working': '💼 搬緊磚…數字喺度跳 📈',
+    'status.lunch': '🍜 午餐時間',
+    'status.afterWork': '🎉 今日收工',
+    'cd.toWork': '距離返工', 'cd.toLunch': '距離食lunch',
+    'cd.toAfterLunch': '距離下午開工', 'cd.toEnd': '距離收工',
+    'cd.doneToday': '今日收工', 'cd.toNextWork': '距離下次返工',
+    'holiday.none': '🏖️ 今年公眾假期已過晒',
+    'holiday.next': '🏖️ 下個假期 {name}（{date}，仲有 {days} 日）',
+    'card.todaySalary': '💼 今日已賺',
+    'card.todaySalarySub': '日薪 {daily}（進度 {progress}%）',
+    'card.todayStock': '📈 今日副業/股市（可選）',
+    'card.stockPlaceholder': '金額，蝕錢填負數',
+    'card.notePlaceholder': '可選備註',
+    'card.todayTotal': '🪙 今日總收益',
+    'card.todayTotalSub': '糧 {salary} + 副業 {side}',
+    'card.goalAmount': '🎯 年度目標進度',
+    'card.goalSub': '進度 {pct}% ｜ {eta}',
+    'card.goalEtaDone': '🎉 已達成！',
+    'card.goalEtaRemain': '仲差 {remain}（約 {days} 個工作日）',
+    'card.goalEtaNoGoal': '未設定目標',
+    'card.monthTotal': '📆 本月綜合',
+    'card.monthSub': '糧 {salary} + 副業 {side}（糧進度 {pct}%）',
+    'card.grandTotal': '🏆 累計（自開始日期）',
+    'card.grandSub': '糧 {salary} + 副業 {side}，搬磚 {days} 日',
+    'card.monthAsset': '💎 每月資產增值',
+    'card.monthAssetSub': '現金 {cash} + 退休金 {pension}',
+    'card.bonusNet': '🎁 年終花紅（稅後資產）',
+    'card.bonusNetSub': '{months} 個月花紅 = {bonus}，邊際稅 {tax}',
+    'card.bonusNotSet': '未設定年終花紅（設定入面可填）',
+    'card.annualAsset': '💎 全年資產增值',
+    'card.annualAssetSub': '現金 {cash} + 退休金 {pension}（有效稅率 {rate}%）',
+    'stat.gross': '💼 稅前月薪', 'stat.pension': '🏦 退休金/月',
+    'stat.taxMonth': '🧾 稅款/月', 'stat.netMonth': '💎 資產增值/月',
+    'stat.hourly': '⏱️ 時薪', 'stat.daily': '📅 日薪', 'stat.perSec': '🚀 秒薪',
+    'chart.title': '📊 累計收益走勢',
+    'chart.legend.salary': '糧', 'chart.legend.side': '副業', 'chart.legend.total': '總',
+    'chart.empty': '未到開始日期，暫無數據',
+    'hist.title': '📜 每日記錄（可直接改）',
+    'hist.col.date': '日期', 'hist.col.weekday': '星期',
+    'hist.col.salary': '糧', 'hist.col.side': '副業盈虧',
+    'hist.col.note': '備註', 'hist.col.type': '類型', 'hist.col.total': '合計',
+    'hist.type.normal': '工作日', 'hist.type.leave': '放假', 'hist.type.extra': '加班',
+    'hist.today': '今日',
+    'hist.hint': '💡 <b>工作日</b>=正常返工；<b>放假</b>=冇糧；<b>加班</b>=非工作日照計一日糧。',
+    'hist.summary': '共 {count} 日 ｜ 糧 {salary} ｜ 副業 {side} ｜ 合計 {total}',
+    'weekdays': ['日', '一', '二', '三', '四', '五', '六'],
+    'tax.sectionTitle': '💸 稅 & 退休金 明細',
+    'tax.breakdownTitle': '📊 計算明細',
+    'tax.hint': '本計算僅供個人參考，不構成正式稅務意見。',
+    'tax.noneHint': '稅務計算已關閉。選擇一個方案以查看明細。',
+    'tax.save': '💾 儲存稅務設定',
+    'tax.rowGross12': '12 個月薪金',
+    'tax.rowBonus': '年終花紅（{months} 個月）',
+    'tax.rowAnnualIncome': '年度總收入',
+    'tax.rowDeductions': '➖ 可扣除項',
+    'tax.rowDeductTotal': '扣除合計',
+    'tax.rowNetAssessable': '淨入息總額',
+    'tax.rowAllowances': '➖ 免稅額',
+    'tax.rowAllowTotal': '免稅額合計',
+    'tax.rowTaxable': '應課稅入息',
+    'tax.rowTaxCalc': '🧮 稅款計算',
+    'tax.rowTaxFinal': '✅ 應繳稅款',
+    'tax.rowEffective': '有效稅率',
+    'tax.rowMarginal': '邊際稅率',
+    'settings.title': '⚙️ 設定',
+    'settings.salary': '月薪（稅前）',
+    'settings.bonusMonths': '年終花紅（月數）',
+    'settings.startDate': '開始日期',
+    'settings.workStart': '返工時間', 'settings.workEnd': '收工時間',
+    'settings.lunchStart': '午餐開始', 'settings.lunchEnd': '午餐結束',
+    'settings.yearlyGoal': '年度收入目標',
+    'settings.fxRate': '匯率（顯示×此系數）',
+    'settings.decimals': '小數位',
+    'settings.taxProvider': '稅務計算方案',
+    'settings.pensionProvider': '退休金方案',
+    'settings.save': '💾 儲存',
+    'settings.export': '📤 匯出數據',
+    'settings.import': '📥 匯入數據',
+    'settings.reset': '♻️ 重設設定',
+    'settings.rerunWizard': '🪄 重新執行嚮導',
+    'settings.clear': '🗑️ 清空所有記錄',
+    'settings.hint': '💾 數據存於瀏覽器 localStorage，跨設備請使用匯出/匯入。',
+    'settings.saved': '✅ 已儲存',
+    'settings.confirmReset': '重設設定為預設？每日記錄會保留。',
+    'settings.confirmClear': '⚠️ 清空所有每日記錄？設定唔會被清除。',
+    'settings.confirmImport': '匯入會覆蓋當前所有設定同記錄，繼續？',
+    'settings.importOk': '✅ 匯入成功',
+    'settings.importFail': '❌ 匯入失敗：{err}',
+    'settings.importBadFormat': '檔案格式唔啱',
+    'common.toggle': '展開/收起',
+    'footer.privacy': '🔒 100% 本地運行，不追蹤、不聯網、不上傳',
+    'wizard.title1': '歡迎使用 PayPulse',
+    'wizard.desc1': '睇住份糧每秒跳動。5 條問題搞掂晒。',
+    'wizard.title2': '你喺邊度返工？',
+    'wizard.desc2': '會設定預設貨幣、稅務、退休金同公眾假期。之後隨時可改。',
+    'wizard.title3': '你嘅薪金',
+    'wizard.desc3': '你每月稅前攞幾多？',
+    'wizard.title4': '你嘅作息',
+    'wizard.desc4': '返工時間？預設 9:00–18:00，午餐 1 小時。',
+    'wizard.title5': '完成！🎉',
+    'wizard.desc5': '數據全喺本機 localStorage，開始睇份糧跳啦 📈',
+    'wizard.salary.label': '月薪',
+    'wizard.bonus.label': '年終花紅（月數，0 = 冇）',
+    'wizard.startDate.label': '開始日期（幾時入職/開始計？）',
+    'wizard.goal.label': '年度收入目標（可選）',
+    'wizard.next': '下一步 →', 'wizard.back': '← 上一步',
+    'wizard.finish': '開始搬磚 💸', 'wizard.skip': '跳過設定',
+    'tvc.title': '🔮 自願多供退休金（節稅試算）',
+    'tvc.col.contribution': '自願供款',
+    'tvc.col.saved': '慳稅',
+    'tvc.col.yield': '年化回報',
+    'tvc.current': '← 當前',
+    'tvc.hint': '💡 你嘅邊際稅率約 <b>{rate}%</b>。每自願多供 $1 慳 <b>{saved}</b> 稅。',
+  },
+};
+
+/* ============ 2. Currencies ============ */
+const CURRENCIES = {
+  HKD: { symbol: 'HK$',  decimals: 2 },
+  CNY: { symbol: '¥',    decimals: 2 },
+  USD: { symbol: 'US$',  decimals: 2 },
+  EUR: { symbol: '€',    decimals: 2 },
+  JPY: { symbol: '¥',    decimals: 0 },
+  GBP: { symbol: '£',    decimals: 2 },
+  SGD: { symbol: 'S$',   decimals: 2 },
+  AUD: { symbol: 'A$',   decimals: 2 },
+  CAD: { symbol: 'C$',   decimals: 2 },
+  KRW: { symbol: '₩',    decimals: 0 },
+  TWD: { symbol: 'NT$',  decimals: 0 },
+  INR: { symbol: '₹',    decimals: 2 },
+};
+
+/* ============ 3. Holidays by region ============
+ * Each entry is a date → record:
+ *   { type?: 'holiday'|'workday', en: '…', 'zh-CN': '…', 'zh-HK': '…' }
+ *
+ * type defaults to 'holiday'. Use 'workday' for "make-up working days"
+ * (e.g. China's 调休 — weekends shifted to cover extended holidays).
+ *
+ * ⚠ Data is verified against the best-known public source at the time of
+ * writing. Always double-check against the official government notice,
+ * especially late-year tweaks and observed-substitution days.
+ */
+const HOLIDAYS = {
+  // Hong Kong 2026 — Gazette of the HKSAR Government
+  HK: {
+    '2026-01-01': { 'en': "New Year's Day", 'zh-CN': '元旦', 'zh-HK': '元旦' },
+    '2026-02-17': { 'en': 'Lunar New Year Day 1', 'zh-CN': '农历年初一', 'zh-HK': '農曆年初一' },
+    '2026-02-18': { 'en': 'Lunar New Year Day 2', 'zh-CN': '农历年初二', 'zh-HK': '農曆年初二' },
+    '2026-02-19': { 'en': 'Lunar New Year Day 3', 'zh-CN': '农历年初三', 'zh-HK': '農曆年初三' },
+    '2026-04-03': { 'en': 'Good Friday', 'zh-CN': '耶稣受难节', 'zh-HK': '耶穌受難節' },
+    '2026-04-04': { 'en': 'Day after Good Friday', 'zh-CN': '耶稣受难节翌日', 'zh-HK': '耶穌受難節翌日' },
+    '2026-04-06': { 'en': 'Ching Ming (observed)', 'zh-CN': '清明节翌日', 'zh-HK': '清明節翌日' },
+    '2026-04-07': { 'en': 'Easter Monday (observed)', 'zh-CN': '复活节星期一翌日', 'zh-HK': '復活節星期一翌日' },
+    '2026-05-01': { 'en': 'Labour Day', 'zh-CN': '劳动节', 'zh-HK': '勞動節' },
+    '2026-05-25': { 'en': "Buddha's Birthday (observed)", 'zh-CN': '佛诞翌日', 'zh-HK': '佛誕翌日' },
+    '2026-06-19': { 'en': 'Dragon Boat Festival', 'zh-CN': '端午节', 'zh-HK': '端午節' },
+    '2026-07-01': { 'en': 'HKSAR Establishment Day', 'zh-CN': '香港特区成立纪念日', 'zh-HK': '香港特區成立紀念日' },
+    '2026-09-26': { 'en': 'Day after Mid-Autumn', 'zh-CN': '中秋节翌日', 'zh-HK': '中秋節翌日' },
+    '2026-10-01': { 'en': 'National Day', 'zh-CN': '国庆节', 'zh-HK': '國慶節' },
+    '2026-10-19': { 'en': 'Chung Yeung (observed)', 'zh-CN': '重阳节翌日', 'zh-HK': '重陽節翌日' },
+    '2026-12-25': { 'en': 'Christmas Day', 'zh-CN': '圣诞节', 'zh-HK': '聖誕節' },
+    '2026-12-26': { 'en': 'Day after Christmas', 'zh-CN': '圣诞节后首个周日', 'zh-HK': '聖誕節後首個週日' },
+  },
+
+  // Mainland China 2026 — 国务院办公厅《关于 2026 年部分节假日安排的通知》
+  // Includes 调休 make-up workdays (type:'workday') that turn a weekend
+  // into a working day in exchange for a longer public holiday stretch.
+  CN: {
+    '2026-01-01': { 'en': "New Year's Day", 'zh-CN': '元旦', 'zh-HK': '元旦' },
+    '2026-01-02': { 'en': 'New Year holiday', 'zh-CN': '元旦假期', 'zh-HK': '元旦假期' },
+    '2026-01-03': { 'en': 'New Year holiday', 'zh-CN': '元旦假期', 'zh-HK': '元旦假期' },
+
+    // Spring Festival (Lunar New Year) — 9-day break Feb 15–23
+    '2026-02-14': { type: 'workday', 'en': 'Spring Festival make-up workday', 'zh-CN': '春节调休上班', 'zh-HK': '春節調休上班' },
+    '2026-02-15': { 'en': "Spring Festival Eve", 'zh-CN': '除夕', 'zh-HK': '除夕' },
+    '2026-02-16': { 'en': "Lunar New Year's Day", 'zh-CN': '春节', 'zh-HK': '春節' },
+    '2026-02-17': { 'en': 'Spring Festival holiday', 'zh-CN': '春节假期', 'zh-HK': '春節假期' },
+    '2026-02-18': { 'en': 'Spring Festival holiday', 'zh-CN': '春节假期', 'zh-HK': '春節假期' },
+    '2026-02-19': { 'en': 'Spring Festival holiday', 'zh-CN': '春节假期', 'zh-HK': '春節假期' },
+    '2026-02-20': { 'en': 'Spring Festival holiday', 'zh-CN': '春节假期', 'zh-HK': '春節假期' },
+    '2026-02-21': { 'en': 'Spring Festival holiday', 'zh-CN': '春节假期', 'zh-HK': '春節假期' },
+    '2026-02-22': { 'en': 'Spring Festival holiday', 'zh-CN': '春节假期', 'zh-HK': '春節假期' },
+    '2026-02-23': { 'en': 'Spring Festival holiday', 'zh-CN': '春节假期', 'zh-HK': '春節假期' },
+    '2026-02-28': { type: 'workday', 'en': 'Spring Festival make-up workday', 'zh-CN': '春节调休上班', 'zh-HK': '春節調休上班' },
+
+    // Qingming (Tomb-sweeping) — 3-day break Apr 4–6 (no make-up)
+    '2026-04-04': { 'en': 'Qingming Festival', 'zh-CN': '清明节', 'zh-HK': '清明節' },
+    '2026-04-05': { 'en': 'Qingming holiday', 'zh-CN': '清明假期', 'zh-HK': '清明假期' },
+    '2026-04-06': { 'en': 'Qingming holiday', 'zh-CN': '清明假期', 'zh-HK': '清明假期' },
+
+    // Labour Day — 5-day break May 1–5, make-up on Apr 26
+    '2026-04-26': { type: 'workday', 'en': 'Labour Day make-up workday', 'zh-CN': '劳动节调休上班', 'zh-HK': '勞動節調休上班' },
+    '2026-05-01': { 'en': 'Labour Day', 'zh-CN': '劳动节', 'zh-HK': '勞動節' },
+    '2026-05-02': { 'en': 'Labour Day holiday', 'zh-CN': '劳动节假期', 'zh-HK': '勞動節假期' },
+    '2026-05-03': { 'en': 'Labour Day holiday', 'zh-CN': '劳动节假期', 'zh-HK': '勞動節假期' },
+    '2026-05-04': { 'en': 'Labour Day holiday', 'zh-CN': '劳动节假期', 'zh-HK': '勞動節假期' },
+    '2026-05-05': { 'en': 'Labour Day holiday', 'zh-CN': '劳动节假期', 'zh-HK': '勞動節假期' },
+
+    // Dragon Boat — 3 days Jun 19–21 (no make-up)
+    '2026-06-19': { 'en': 'Dragon Boat Festival', 'zh-CN': '端午节', 'zh-HK': '端午節' },
+    '2026-06-20': { 'en': 'Dragon Boat holiday', 'zh-CN': '端午假期', 'zh-HK': '端午假期' },
+    '2026-06-21': { 'en': 'Dragon Boat holiday', 'zh-CN': '端午假期', 'zh-HK': '端午假期' },
+
+    // Mid-Autumn + National Day — 10 days Oct 1–10, make-ups on Sep 27 and Oct 11
+    '2026-09-27': { type: 'workday', 'en': 'National Day make-up workday', 'zh-CN': '国庆调休上班', 'zh-HK': '國慶調休上班' },
+    '2026-10-01': { 'en': 'National Day', 'zh-CN': '国庆节', 'zh-HK': '國慶節' },
+    '2026-10-02': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-03': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-04': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-05': { 'en': 'Mid-Autumn Festival', 'zh-CN': '中秋节', 'zh-HK': '中秋節' },
+    '2026-10-06': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-07': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-08': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-09': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-10': { 'en': 'National Day holiday', 'zh-CN': '国庆假期', 'zh-HK': '國慶假期' },
+    '2026-10-11': { type: 'workday', 'en': 'National Day make-up workday', 'zh-CN': '国庆调休上班', 'zh-HK': '國慶調休上班' },
+  },
+
+  // United States 2026 — federal holidays (OPM).
+  US: {
+    '2026-01-01': { 'en': "New Year's Day", 'zh-CN': '元旦', 'zh-HK': '元旦' },
+    '2026-01-19': { 'en': 'Martin Luther King Jr. Day', 'zh-CN': '马丁·路德·金日', 'zh-HK': '馬丁·路德·金日' },
+    '2026-02-16': { 'en': "Presidents' Day", 'zh-CN': '总统日', 'zh-HK': '總統日' },
+    '2026-05-25': { 'en': 'Memorial Day', 'zh-CN': '阵亡将士纪念日', 'zh-HK': '陣亡將士紀念日' },
+    '2026-06-19': { 'en': 'Juneteenth', 'zh-CN': '六月节', 'zh-HK': '六月節' },
+    '2026-07-03': { 'en': 'Independence Day (observed)', 'zh-CN': '独立日（调休）', 'zh-HK': '獨立日（調休）' },
+    '2026-09-07': { 'en': 'Labor Day', 'zh-CN': '劳动节', 'zh-HK': '勞動節' },
+    '2026-10-12': { 'en': 'Columbus Day', 'zh-CN': '哥伦布日', 'zh-HK': '哥倫布日' },
+    '2026-11-11': { 'en': 'Veterans Day', 'zh-CN': '退伍军人节', 'zh-HK': '退伍軍人節' },
+    '2026-11-26': { 'en': 'Thanksgiving Day', 'zh-CN': '感恩节', 'zh-HK': '感恩節' },
+    '2026-12-25': { 'en': 'Christmas Day', 'zh-CN': '圣诞节', 'zh-HK': '聖誕節' },
+  },
+
+  // United Kingdom 2026 — England & Wales bank holidays (gov.uk).
+  UK: {
+    '2026-01-01': { 'en': "New Year's Day", 'zh-CN': '元旦', 'zh-HK': '元旦' },
+    '2026-04-03': { 'en': 'Good Friday', 'zh-CN': '耶稣受难节', 'zh-HK': '耶穌受難節' },
+    '2026-04-06': { 'en': 'Easter Monday', 'zh-CN': '复活节星期一', 'zh-HK': '復活節星期一' },
+    '2026-05-04': { 'en': 'Early May Bank Holiday', 'zh-CN': '五月初银行假日', 'zh-HK': '五月初銀行假日' },
+    '2026-05-25': { 'en': 'Spring Bank Holiday', 'zh-CN': '春季银行假日', 'zh-HK': '春季銀行假日' },
+    '2026-08-31': { 'en': 'Summer Bank Holiday', 'zh-CN': '夏季银行假日', 'zh-HK': '夏季銀行假日' },
+    '2026-12-25': { 'en': 'Christmas Day', 'zh-CN': '圣诞节', 'zh-HK': '聖誕節' },
+    '2026-12-28': { 'en': 'Boxing Day (substitute)', 'zh-CN': '节礼日（调休）', 'zh-HK': '節禮日（調休）' },
+  },
+
+  // Singapore 2026 — MOM gazette.
+  SG: {
+    '2026-01-01': { 'en': "New Year's Day", 'zh-CN': '元旦', 'zh-HK': '元旦' },
+    '2026-02-17': { 'en': 'Chinese New Year Day 1', 'zh-CN': '春节', 'zh-HK': '春節' },
+    '2026-02-18': { 'en': 'Chinese New Year Day 2', 'zh-CN': '春节次日', 'zh-HK': '春節次日' },
+    '2026-03-21': { 'en': 'Hari Raya Puasa', 'zh-CN': '开斋节', 'zh-HK': '開齋節' },
+    '2026-04-03': { 'en': 'Good Friday', 'zh-CN': '耶稣受难节', 'zh-HK': '耶穌受難節' },
+    '2026-05-01': { 'en': 'Labour Day', 'zh-CN': '劳动节', 'zh-HK': '勞動節' },
+    '2026-05-27': { 'en': 'Hari Raya Haji', 'zh-CN': '哈芝节', 'zh-HK': '哈芝節' },
+    '2026-06-01': { 'en': 'Vesak Day (observed)', 'zh-CN': '卫塞节（调休）', 'zh-HK': '衛塞節（調休）' },
+    '2026-08-10': { 'en': 'National Day (observed)', 'zh-CN': '国庆日（调休）', 'zh-HK': '國慶日（調休）' },
+    '2026-11-09': { 'en': 'Deepavali (observed)', 'zh-CN': '屠妖节（调休）', 'zh-HK': '屠妖節（調休）' },
+    '2026-12-25': { 'en': 'Christmas Day', 'zh-CN': '圣诞节', 'zh-HK': '聖誕節' },
+  },
+
+  // Japan 2026 — 内閣府 calendar.
+  JP: {
+    '2026-01-01': { 'en': "New Year's Day", 'zh-CN': '元旦', 'zh-HK': '元旦' },
+    '2026-01-12': { 'en': 'Coming of Age Day', 'zh-CN': '成人日', 'zh-HK': '成人日' },
+    '2026-02-11': { 'en': 'National Foundation Day', 'zh-CN': '建国纪念日', 'zh-HK': '建國紀念日' },
+    '2026-02-23': { 'en': "Emperor's Birthday", 'zh-CN': '天皇诞辰', 'zh-HK': '天皇誕辰' },
+    '2026-03-20': { 'en': 'Vernal Equinox Day', 'zh-CN': '春分日', 'zh-HK': '春分日' },
+    '2026-04-29': { 'en': 'Showa Day', 'zh-CN': '昭和日', 'zh-HK': '昭和日' },
+    '2026-05-04': { 'en': 'Greenery Day', 'zh-CN': '绿之日', 'zh-HK': '綠之日' },
+    '2026-05-05': { 'en': "Children's Day", 'zh-CN': '儿童节', 'zh-HK': '兒童節' },
+    '2026-05-06': { 'en': 'Constitution Day (observed)', 'zh-CN': '宪法纪念日（调休）', 'zh-HK': '憲法紀念日（調休）' },
+    '2026-07-20': { 'en': 'Marine Day', 'zh-CN': '海之日', 'zh-HK': '海之日' },
+    '2026-08-11': { 'en': 'Mountain Day', 'zh-CN': '山之日', 'zh-HK': '山之日' },
+    '2026-09-21': { 'en': 'Respect for the Aged Day', 'zh-CN': '敬老日', 'zh-HK': '敬老日' },
+    '2026-09-23': { 'en': 'Autumnal Equinox Day', 'zh-CN': '秋分日', 'zh-HK': '秋分日' },
+    '2026-10-12': { 'en': 'Sports Day', 'zh-CN': '体育日', 'zh-HK': '體育日' },
+    '2026-11-03': { 'en': 'Culture Day', 'zh-CN': '文化日', 'zh-HK': '文化日' },
+    '2026-11-23': { 'en': 'Labour Thanksgiving Day', 'zh-CN': '勤劳感谢日', 'zh-HK': '勤勞感謝日' },
+  },
+
+  // Users can extend any region, or just start empty and add their own.
+  CUSTOM: {},
+};
+
+/* ============ 4. Tax Providers ============ */
+const TAX_PROVIDERS = {
+  'none': {
+    id: 'none',
+    name: { 'en': 'None (show gross)', 'zh-CN': '不计税（显示毛额）', 'zh-HK': '唔計稅' },
+    defaultConfig: {},
+    renderConfig() { return ''; },
+    readConfig() {},
+    compute(gross, opts) {
+      return { tax: 0, net: gross, marginalRate: 0, breakdown: [] };
+    },
+  },
+
+  'flat-rate': {
+    id: 'flat-rate',
+    name: { 'en': 'Flat rate', 'zh-CN': '固定税率', 'zh-HK': '單一稅率' },
+    defaultConfig: { ratePercent: 20 },
+    renderConfig(cfg, t) {
+      return `<div class="row">
+        <div><label>${t('tax.flatRate')}</label>
+          <input id="taxFlatRate" type="number" min="0" max="100" step="0.1" value="${cfg.ratePercent||0}" />
+        </div><div></div>
+      </div>`;
+    },
+    readConfig() {
+      const el = document.getElementById('taxFlatRate');
+      if (!el) return {};
+      return { ratePercent: Number(el.value) || 0 };
+    },
+    compute(gross, { config, t }) {
+      const rate = (config.ratePercent || 0) / 100;
+      const tax = Math.max(0, gross) * rate;
+      return {
+        tax, net: gross - tax, marginalRate: rate,
+        breakdown: [
+          { label: t('tax.rowAnnualIncome'), amount: gross, bold: true },
+          { label: `${t('tax.rowTaxFinal')} (${(rate*100).toFixed(1)}%)`, amount: tax, bold: true },
+        ],
+      };
+    },
+  },
+
+  'simple-brackets': {
+    id: 'simple-brackets',
+    name: { 'en': 'Progressive brackets (custom)', 'zh-CN': '累进税率（自定义）', 'zh-HK': '累進稅率（自訂）' },
+    defaultConfig: {
+      personalAllowance: 12000,
+      bracketsJson: '[{"upTo":20000,"rate":0.1},{"upTo":50000,"rate":0.2},{"upTo":null,"rate":0.3}]',
+    },
+    renderConfig(cfg, t) {
+      return `<div class="row">
+        <div><label>${t('tax.personalAllowance')}</label>
+          <input id="taxAllowance" type="number" min="0" step="100" value="${cfg.personalAllowance||0}" />
+        </div>
+        <div><label>${t('tax.bracketsJson')}</label>
+          <input id="taxBracketsJson" type="text" value='${escapeAttr(cfg.bracketsJson)}' />
+        </div>
+      </div>
+      <div class="hint">${t('tax.bracketsHint')}</div>`;
+    },
+    readConfig() {
+      const a = document.getElementById('taxAllowance');
+      const b = document.getElementById('taxBracketsJson');
+      const out = {};
+      if (a) out.personalAllowance = Number(a.value) || 0;
+      if (b) {
+        try { JSON.parse(b.value); out.bracketsJson = b.value; } catch(_) {}
+      }
+      return out;
+    },
+    compute(gross, { config, t }) {
+      let brackets = [];
+      try { brackets = JSON.parse(config.bracketsJson || '[]'); } catch(_){}
+      const allowance = Number(config.personalAllowance) || 0;
+      const taxable = Math.max(0, gross - allowance);
+      let tax = 0, last = 0, marginal = 0;
+      for (const b of brackets) {
+        const ceiling = (b.upTo === null || b.upTo === undefined) ? Infinity : Number(b.upTo);
+        const rate = Number(b.rate) || 0;
+        if (taxable > last) {
+          const slice = Math.min(taxable, ceiling) - last;
+          if (slice > 0) { tax += slice * rate; marginal = rate; }
+        }
+        last = ceiling;
+        if (taxable <= ceiling) break;
+      }
+      return {
+        tax, net: gross - tax, marginalRate: marginal,
+        breakdown: [
+          { label: t('tax.rowAnnualIncome'), amount: gross },
+          { label: t('tax.personalAllowance'), amount: -allowance, cls: 'neg' },
+          { label: t('tax.rowTaxable'), amount: taxable, bold: true },
+          { label: t('tax.rowTaxFinal'), amount: tax, bold: true },
+        ],
+      };
+    },
+  },
+
+  // ========= China Individual Income Tax (综合所得 + 专项附加扣除) =========
+  //
+  // Annual composite-income brackets (居民个人综合所得) 2026:
+  //   ≤   36,000                3%   速算扣除        0
+  //   ≤  144,000               10%   速算扣除    2,520
+  //   ≤  300,000               20%   速算扣除   16,920
+  //   ≤  420,000               25%   速算扣除   31,920
+  //   ≤  660,000               30%   速算扣除   52,920
+  //   ≤  960,000               35%   速算扣除   85,920
+  //   >  960,000               45%   速算扣除  181,920
+  //
+  // Year-end bonus (全年一次性奖金) can be taxed separately through 2027.
+  // Separate table is based on bonus/12 to pick the bracket, then:
+  //   tax = bonus * rate - quickDeduction
+  //
+  // Special additional deductions (专项附加扣除) supported per current rules.
+  // User enters monthly amounts; we × 12 internally.
+  'cn-iit': {
+    id: 'cn-iit',
+    name: {
+      'en': 'China Individual Income Tax (综合所得)',
+      'zh-CN': '中国个人所得税（综合所得）',
+      'zh-HK': '中國個人所得稅（綜合所得）',
+    },
+    defaultConfig: {
+      // Special additional deductions (每月金额，× 12 换算年度)
+      sadChildren: 0,              // 子女教育 2000/月/人
+      sadInfants: 0,               // 3 岁以下婴幼儿照护 2000/月/人
+      sadContinuingEduAcademic: false,   // 学历继续教育 400/月
+      sadContinuingEduVocationalAnnual: 0, // 职业资格 3600/次/年
+      sadLoanInterest: false,      // 住房贷款利息 1000/月
+      sadRentCity: 'none',         // 'none' | 't1' | 't2' | 't3'
+      sadElderlyRolePerMonth: 0,   // 赡养老人（独生子女 3000/月；非独生一般 1500/月，由用户自填）
+      sadSeriousIllnessAnnual: 0,  // 大病医疗（年度可扣金额）
+      otherDeductionsAnnual: 0,    // 其他依法确定的扣除（企业年金等）
+      charitableDonationsAnnual: 0,// 慈善捐赠（<=应纳税所得 30% 部分可扣）
+      bonusMethod: 'separate',     // 'separate' | 'combined'
+    },
+    renderConfig(cfg, t) {
+      const v = (k, d) => (cfg[k] != null ? cfg[k] : d);
+      const sel = (a, b) => a === b ? 'selected' : '';
+      const chk = (b) => b ? 'selected' : '';
+      return `
+        <h4 style="margin-bottom:10px;font-size:14px;color:var(--muted)">${t('cn.iit.sadTitle')}</h4>
+        <div class="hint" style="margin:-4px 0 10px">${t('cn.iit.sadHint')}</div>
+        <div class="row">
+          <div><label>${t('cn.iit.sadChildren')}</label><input id="cnSadChildren" type="number" min="0" step="1" value="${v('sadChildren',0)}" /></div>
+          <div><label>${t('cn.iit.sadInfants')}</label><input id="cnSadInfants" type="number" min="0" step="1" value="${v('sadInfants',0)}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.iit.sadContEduAcademic')}</label>
+            <select id="cnSadCeA">
+              <option value="no" ${!v('sadContinuingEduAcademic',false)?'selected':''}>${t('common.no')}</option>
+              <option value="yes" ${v('sadContinuingEduAcademic',false)?'selected':''}>${t('common.yes')}</option>
+            </select></div>
+          <div><label>${t('cn.iit.sadContEduVocational')}</label><input id="cnSadCeV" type="number" min="0" step="100" value="${v('sadContinuingEduVocationalAnnual',0)}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.iit.sadLoan')}</label>
+            <select id="cnSadLoan">
+              <option value="no" ${!v('sadLoanInterest',false)?'selected':''}>${t('common.no')}</option>
+              <option value="yes" ${v('sadLoanInterest',false)?'selected':''}>${t('common.yes')}</option>
+            </select></div>
+          <div><label>${t('cn.iit.sadRent')}</label>
+            <select id="cnSadRent">
+              <option value="none" ${sel(v('sadRentCity','none'),'none')}>${t('cn.iit.rent.none')}</option>
+              <option value="t1"   ${sel(v('sadRentCity','none'),'t1')}>${t('cn.iit.rent.t1')}</option>
+              <option value="t2"   ${sel(v('sadRentCity','none'),'t2')}>${t('cn.iit.rent.t2')}</option>
+              <option value="t3"   ${sel(v('sadRentCity','none'),'t3')}>${t('cn.iit.rent.t3')}</option>
+            </select></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.iit.sadElderly')}</label><input id="cnSadElderly" type="number" min="0" max="3000" step="100" value="${v('sadElderlyRolePerMonth',0)}" /></div>
+          <div><label>${t('cn.iit.sadSerious')}</label><input id="cnSadSerious" type="number" min="0" step="100" value="${v('sadSeriousIllnessAnnual',0)}" /></div>
+        </div>
+        <h4 style="margin:16px 0 10px;font-size:14px;color:var(--muted)">${t('cn.iit.otherTitle')}</h4>
+        <div class="row">
+          <div><label>${t('cn.iit.otherDeductions')}</label><input id="cnOtherDed" type="number" min="0" step="100" value="${v('otherDeductionsAnnual',0)}" /></div>
+          <div><label>${t('cn.iit.donations')}</label><input id="cnDonations" type="number" min="0" step="100" value="${v('charitableDonationsAnnual',0)}" /></div>
+        </div>
+        <h4 style="margin:16px 0 10px;font-size:14px;color:var(--muted)">${t('cn.iit.bonusTitle')}</h4>
+        <div class="row">
+          <div><label>${t('cn.iit.bonusMethod')}</label>
+            <select id="cnBonusMethod">
+              <option value="separate" ${sel(v('bonusMethod','separate'),'separate')}>${t('cn.iit.bonus.separate')}</option>
+              <option value="combined" ${sel(v('bonusMethod','separate'),'combined')}>${t('cn.iit.bonus.combined')}</option>
+            </select></div>
+          <div></div>
+        </div>
+        <div class="hint">${t('cn.iit.bonusHint')}</div>
+      `;
+    },
+    readConfig() {
+      const g = (id) => document.getElementById(id);
+      const num = (id) => Number(g(id)?.value) || 0;
+      return {
+        sadChildren: num('cnSadChildren'),
+        sadInfants: num('cnSadInfants'),
+        sadContinuingEduAcademic: g('cnSadCeA')?.value === 'yes',
+        sadContinuingEduVocationalAnnual: num('cnSadCeV'),
+        sadLoanInterest: g('cnSadLoan')?.value === 'yes',
+        sadRentCity: g('cnSadRent')?.value || 'none',
+        sadElderlyRolePerMonth: num('cnSadElderly'),
+        sadSeriousIllnessAnnual: num('cnSadSerious'),
+        otherDeductionsAnnual: num('cnOtherDed'),
+        charitableDonationsAnnual: num('cnDonations'),
+        bonusMethod: g('cnBonusMethod')?.value || 'separate',
+      };
+    },
+    compute(gross, opts) {
+      const t = opts.t;
+      const cfg = opts.config || {};
+      const pension = opts.pension || { annual: 0, bonusPortion: 0 };
+      const bonus = opts.bonus || 0;
+      const baseIncome = opts.baseIncome || gross;
+
+      // ---- Annual composite brackets (7 levels) ----
+      // [upperBound (taxable income), rate, quickDeduction]
+      const ANNUAL_BRACKETS = [
+        [36000,   0.03,      0],
+        [144000,  0.10,   2520],
+        [300000,  0.20,  16920],
+        [420000,  0.25,  31920],
+        [660000,  0.30,  52920],
+        [960000,  0.35,  85920],
+        [Infinity, 0.45, 181920],
+      ];
+      // Separate bonus uses a "monthly" rate table (picked by bonus/12):
+      // [upperBound (monthly), rate, monthly quickDeduction]
+      const MONTHLY_BRACKETS = [
+        [3000,    0.03,      0],
+        [12000,   0.10,    210],
+        [25000,   0.20,   1410],
+        [35000,   0.25,   2660],
+        [55000,   0.30,   4410],
+        [80000,   0.35,   7160],
+        [Infinity, 0.45, 15160],
+      ];
+      const applyBracket = (income, table) => {
+        const x = Math.max(0, income);
+        for (const [up, rate, q] of table) {
+          if (x <= up) return { tax: Math.max(0, x * rate - q), rate };
+        }
+        return { tax: 0, rate: 0 };
+      };
+
+      // ---- Special additional deductions (annualized) ----
+      const rentTable = { none: 0, t1: 1500, t2: 1100, t3: 800 };
+      const sadMonthly =
+          (Number(cfg.sadChildren)  || 0) * 2000
+        + (Number(cfg.sadInfants)   || 0) * 2000
+        + (cfg.sadContinuingEduAcademic ? 400 : 0)
+        + (cfg.sadLoanInterest ? 1000 : 0)
+        + (rentTable[cfg.sadRentCity] || 0)
+        + Math.min(3000, Math.max(0, Number(cfg.sadElderlyRolePerMonth) || 0));
+      const sadAnnual = sadMonthly * 12
+        + (Number(cfg.sadContinuingEduVocationalAnnual) || 0);
+
+      const seriousIllness = Math.min(
+        80000, Math.max(0, (Number(cfg.sadSeriousIllnessAnnual) || 0) - 15000) * 1
+      ); // 累计 >15000 部分，限额 80000
+      // For simplicity we let users enter the deductible amount directly too:
+      const seriousIllnessRaw = Number(cfg.sadSeriousIllnessAnnual) || 0;
+      const seriousIllnessDeduct = seriousIllnessRaw >= 15000
+        ? Math.min(80000, seriousIllnessRaw - 15000)
+        : 0;
+
+      const otherAnnual = Number(cfg.otherDeductionsAnnual) || 0;
+
+      // Pension here = 五险一金 employee annual contribution.
+      const pensionAnnual = Math.max(0, Number(pension.annual) || 0);
+
+      // ---- Compose and tax "综合所得" (excluding bonus when separate) ----
+      const BASIC_ALLOW = 60000; // 基本减除费用 5,000/月
+      const method = cfg.bonusMethod === 'combined' ? 'combined' : 'separate';
+
+      const donationsRaw = Number(cfg.charitableDonationsAnnual) || 0;
+
+      // Helper to compute composite tax for a given "comprehensive income"
+      const taxComprehensive = (comprehensiveIncome, extraDeductBonus) => {
+        const fixedDeduct = BASIC_ALLOW + pensionAnnual + sadAnnual
+                          + seriousIllnessDeduct + otherAnnual + (extraDeductBonus || 0);
+        // donations capped at 30% of taxable BEFORE donations
+        const preDonTaxable = Math.max(0, comprehensiveIncome - fixedDeduct);
+        const donAllowed = Math.min(donationsRaw, preDonTaxable * 0.30);
+        const taxable = Math.max(0, preDonTaxable - donAllowed);
+        const r = applyBracket(taxable, ANNUAL_BRACKETS);
+        return { taxable, tax: r.tax, rate: r.rate, fixedDeduct, donAllowed };
+      };
+
+      let taxComposite, taxBonus, bonusRate, bonusQuick;
+      if (method === 'separate' && bonus > 0) {
+        taxComposite = taxComprehensive(baseIncome, 0);
+        // Separate bonus uses the monthly rate table, picked by bonus/12.
+        const monthlyProxy = bonus / 12;
+        let br = MONTHLY_BRACKETS[MONTHLY_BRACKETS.length - 1];
+        for (const b of MONTHLY_BRACKETS) { if (monthlyProxy <= b[0]) { br = b; break; } }
+        bonusRate = br[1]; bonusQuick = br[2];
+        taxBonus = Math.max(0, bonus * bonusRate - bonusQuick);
+      } else {
+        // Combined: add bonus into comprehensive income.
+        taxComposite = taxComprehensive(baseIncome + bonus, 0);
+        taxBonus = 0; bonusRate = taxComposite.rate; bonusQuick = 0;
+      }
+
+      const totalTax = taxComposite.tax + taxBonus;
+      const net = gross - totalTax;
+
+      // Effective vs bonus-only (for marginal-tax helpers used by UI)
+      let noBonusTax;
+      if (method === 'separate') {
+        noBonusTax = taxComposite.tax;
+      } else {
+        const noB = taxComprehensive(baseIncome, 0);
+        noBonusTax = noB.tax;
+      }
+      const bonusMarginalTax = Math.max(0, totalTax - noBonusTax);
+
+      // ---- Breakdown rows for UI ----
+      // Note: the host UI (renderTaxBreakdown) already prepends rows for
+      //   "12 months of salary" and "year-end bonus (N months)" when bonus>0,
+      // so we start our own breakdown with the combined / composite total.
+      const row = (label, amount, opts = {}) => Object.assign({ label, amount }, opts);
+      const breakdown = [];
+      if (method === 'combined' && bonus > 0) {
+        breakdown.push(row(t('cn.iit.row.totalGross'), baseIncome + bonus, { bold: true }));
+      } else {
+        breakdown.push(row(t('cn.iit.row.gross'), baseIncome, { bold: true }));
+      }
+      breakdown.push(row('  ' + t('cn.iit.row.basic'), -BASIC_ALLOW, { cls: 'neg' }));
+      breakdown.push(row('  ' + t('cn.iit.row.siPaid'), -pensionAnnual, { cls: 'neg' }));
+      if (sadAnnual > 0) breakdown.push(row('  ' + t('cn.iit.row.sad'), -sadAnnual, { cls: 'neg' }));
+      if (seriousIllnessDeduct > 0) breakdown.push(row('  ' + t('cn.iit.row.seriousIllness'), -seriousIllnessDeduct, { cls: 'neg' }));
+      if (otherAnnual > 0) breakdown.push(row('  ' + t('cn.iit.row.other'), -otherAnnual, { cls: 'neg' }));
+      if (taxComposite.donAllowed > 0) breakdown.push(row('  ' + t('cn.iit.row.donations'), -taxComposite.donAllowed, { cls: 'neg' }));
+      breakdown.push(row(t('cn.iit.row.taxable'), taxComposite.taxable, { bold: true }));
+      breakdown.push(row(`  ${t('cn.iit.row.compTax')} (${(taxComposite.rate*100).toFixed(0)}%)`, taxComposite.tax));
+      if (method === 'separate' && bonus > 0) {
+        breakdown.push(row(`  ${t('cn.iit.row.bonusTax')} (${(bonusRate*100).toFixed(0)}%)`, taxBonus));
+      }
+      breakdown.push(row(t('tax.rowTaxFinal'), totalTax, { bold: true, cls: 'pos' }));
+
+      return {
+        tax: totalTax, net, marginalRate: taxComposite.rate,
+        taxNoBonus: noBonusTax, bonusMarginalTax,
+        breakdown,
+      };
+    },
+  },
+
+  'hk-salaries-tax': {
+    id: 'hk-salaries-tax',
+    name: { 'en': 'Hong Kong Salaries Tax (2025/26)', 'zh-CN': '香港薪俸税 (2025/26)', 'zh-HK': '香港薪俸稅 (2025/26)' },
+    defaultConfig: {
+      maritalStatus: 'single',
+      children: 0, newbornChildren: 0,
+      parentsUnder60Apart: 0, parentsUnder60Living: 0,
+      parentsOver60Apart: 0, parentsOver60Living: 0,
+      siblings: 0, disabledSelf: false,
+      tvc: 0, homeLoanInterest: 0, selfEducation: 0,
+      elderlyCareExpenses: 0, vhisPremiums: 0,
+      charitableDonations: 0, otherDeductions: 0,
+    },
+    renderConfig(cfg, t) {
+      const v = (k) => cfg[k] || 0;
+      const checked = (b) => b ? 'selected' : '';
+      return `
+        <h4 style="margin-bottom:10px;font-size:14px;color:var(--muted)">${t('hk.allowancesTitle')}</h4>
+        <div class="row">
+          <div><label>${t('hk.maritalStatus')}</label>
+            <select id="hkMarital">
+              <option value="single" ${cfg.maritalStatus==='single'?'selected':''}>${t('hk.single')}</option>
+              <option value="married-joint" ${cfg.maritalStatus==='married-joint'?'selected':''}>${t('hk.marriedJoint')}</option>
+              <option value="married-separate" ${cfg.maritalStatus==='married-separate'?'selected':''}>${t('hk.marriedSep')}</option>
+            </select>
+          </div>
+          <div><label>${t('hk.children')}</label><input id="hkChildren" type="number" min="0" step="1" value="${v('children')}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('hk.newbornChildren')}</label><input id="hkNewborn" type="number" min="0" step="1" value="${v('newbornChildren')}" /></div>
+          <div><label>${t('hk.siblings')}</label><input id="hkSiblings" type="number" min="0" step="1" value="${v('siblings')}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('hk.parentsUnder60Apart')}</label><input id="hkP1" type="number" min="0" step="1" value="${v('parentsUnder60Apart')}" /></div>
+          <div><label>${t('hk.parentsUnder60Living')}</label><input id="hkP2" type="number" min="0" step="1" value="${v('parentsUnder60Living')}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('hk.parentsOver60Apart')}</label><input id="hkP3" type="number" min="0" step="1" value="${v('parentsOver60Apart')}" /></div>
+          <div><label>${t('hk.parentsOver60Living')}</label><input id="hkP4" type="number" min="0" step="1" value="${v('parentsOver60Living')}" /></div>
+        </div>
+        <h4 style="margin:16px 0 10px;font-size:14px;color:var(--muted)">${t('hk.deductionsTitle')}</h4>
+        <div class="row">
+          <div><label>${t('hk.tvc')}</label><input id="hkTvc" type="number" min="0" max="60000" step="1000" value="${v('tvc')}" /></div>
+          <div><label>${t('hk.homeLoan')}</label><input id="hkHomeLoan" type="number" min="0" max="100000" step="1000" value="${v('homeLoanInterest')}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('hk.selfEducation')}</label><input id="hkSelfEdu" type="number" min="0" max="100000" step="1000" value="${v('selfEducation')}" /></div>
+          <div><label>${t('hk.elderlyCare')}</label><input id="hkElderly" type="number" min="0" step="1000" value="${v('elderlyCareExpenses')}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('hk.vhis')}</label><input id="hkVhis" type="number" min="0" step="500" value="${v('vhisPremiums')}" /></div>
+          <div><label>${t('hk.donations')}</label><input id="hkDonations" type="number" min="0" step="500" value="${v('charitableDonations')}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('hk.otherDeductions')}</label><input id="hkOther" type="number" min="0" step="500" value="${v('otherDeductions')}" /></div>
+          <div><label>${t('hk.disabledSelf')}</label>
+            <select id="hkDisabled">
+              <option value="no" ${!cfg.disabledSelf?'selected':''}>${t('common.no')}</option>
+              <option value="yes" ${cfg.disabledSelf?'selected':''}>${t('common.yes')} ($75,000)</option>
+            </select>
+          </div>
+        </div>`;
+    },
+    readConfig() {
+      const g = (id) => document.getElementById(id);
+      const num = (id) => Number(g(id)?.value) || 0;
+      return {
+        maritalStatus: g('hkMarital')?.value || 'single',
+        children: num('hkChildren'), newbornChildren: num('hkNewborn'),
+        siblings: num('hkSiblings'),
+        parentsUnder60Apart: num('hkP1'), parentsUnder60Living: num('hkP2'),
+        parentsOver60Apart: num('hkP3'), parentsOver60Living: num('hkP4'),
+        tvc: num('hkTvc'), homeLoanInterest: num('hkHomeLoan'),
+        selfEducation: num('hkSelfEdu'), elderlyCareExpenses: num('hkElderly'),
+        vhisPremiums: num('hkVhis'), charitableDonations: num('hkDonations'),
+        otherDeductions: num('hkOther'),
+        disabledSelf: g('hkDisabled')?.value === 'yes',
+      };
+    },
+    compute(gross, opts) {
+      // opts = { config, t, pension, bonus, baseIncome }
+      const t = opts.t;
+      const cfg = opts.config;
+      const pension = opts.pension || { annual: 0, bonusPortion: 0 };
+      const bonus = opts.bonus || 0;
+      const baseIncome = opts.baseIncome || gross;
+
+      const BRACKETS = [[50000,0.02],[50000,0.06],[50000,0.10],[50000,0.14],[Infinity,0.17]];
+      const progressive = (nci) => {
+        let rem = Math.max(0, nci), tax = 0;
+        for (const [w, r] of BRACKETS) {
+          const part = Math.min(rem, w); tax += part * r; rem -= part;
+          if (rem <= 0) break;
+        }
+        return tax;
+      };
+      const standardOf = (nti) => nti <= 5000000 ? nti * 0.15 : 5000000 * 0.15 + (nti - 5000000) * 0.16;
+
+      // allowances
+      let allow = 0, allowDetail = [];
+      const ALLOW_BASIC = 132000, ALLOW_MARRIED = 264000;
+      const ALLOW_CHILD = 130000;
+      const A_PARENT_U60_APART = 25000, A_PARENT_U60_LIVING = 50000;
+      const A_PARENT_O60_APART = 50000, A_PARENT_O60_LIVING = 100000;
+      const A_SIBLING = 37500, A_DISABLED = 75000;
+
+      if (cfg.maritalStatus === 'married-joint') {
+        allow += ALLOW_MARRIED; allowDetail.push([t('hk.marriedJoint'), ALLOW_MARRIED]);
+      } else {
+        allow += ALLOW_BASIC; allowDetail.push([t('hk.single'), ALLOW_BASIC]);
+      }
+      const add = (label, count, unit) => {
+        const n = Number(count) || 0;
+        if (n > 0) { allow += n * unit; allowDetail.push([`${label} ×${n}`, n * unit]); }
+      };
+      add(t('hk.children'), cfg.children, ALLOW_CHILD);
+      add(t('hk.newbornChildren'), cfg.newbornChildren, ALLOW_CHILD);
+      add(t('hk.parentsUnder60Apart'), cfg.parentsUnder60Apart, A_PARENT_U60_APART);
+      add(t('hk.parentsUnder60Living'), cfg.parentsUnder60Living, A_PARENT_U60_LIVING);
+      add(t('hk.parentsOver60Apart'), cfg.parentsOver60Apart, A_PARENT_O60_APART);
+      add(t('hk.parentsOver60Living'), cfg.parentsOver60Living, A_PARENT_O60_LIVING);
+      add(t('hk.siblings'), cfg.siblings, A_SIBLING);
+      if (cfg.disabledSelf) { allow += A_DISABLED; allowDetail.push([t('hk.disabledSelf'), A_DISABLED]); }
+
+      // deductions
+      const cap = (v, max) => Math.min(Number(v) || 0, max);
+      let deductDetail = [], deductTotal = 0;
+      const pushD = (label, v) => { if (v > 0) { deductDetail.push([label, v]); deductTotal += v; } };
+      pushD(t('hk.mpfMandatory'), Math.min(pension.annual || 0, 18000));
+      pushD(t('hk.tvc'), cap(cfg.tvc, 60000));
+      pushD(t('hk.homeLoan'), cap(cfg.homeLoanInterest, 100000));
+      pushD(t('hk.selfEducation'), cap(cfg.selfEducation, 100000));
+      pushD(t('hk.elderlyCare'), cap(cfg.elderlyCareExpenses, 200000));
+      pushD(t('hk.vhis'), cap(cfg.vhisPremiums, 80000));
+      pushD(t('hk.otherDeductions'), Number(cfg.otherDeductions) || 0);
+      // Donations capped at 35% of (income - other deductions)
+      const donInput = Number(cfg.charitableDonations) || 0;
+      if (donInput > 0) {
+        const preDon = deductTotal;
+        const donCap = Math.max(0, (gross - preDon) * 0.35);
+        const donAllowed = Math.min(donInput, donCap);
+        if (donAllowed > 0) { deductDetail.push([t('hk.donations'), donAllowed]); deductTotal += donAllowed; }
+      }
+
+      const taxOne = (income, deductions) => {
+        const nti = Math.max(0, income - deductions);
+        const nci = Math.max(0, nti - allow);
+        const prog = progressive(nci), std = standardOf(nti);
+        const tax = Math.min(prog, std);
+        return { nti, nci, prog, std, tax, applied: prog <= std ? 'progressive' : 'standard' };
+      };
+      const withB = taxOne(gross, deductTotal);
+      const dedNoBonus = deductTotal - (pension.bonusPortion || 0);
+      const noB = taxOne(baseIncome, dedNoBonus);
+      const bonusMarginalTax = Math.max(0, withB.tax - noB.tax);
+
+      return {
+        tax: withB.tax, net: gross - withB.tax,
+        marginalRate: 0.17, // approximate top bracket
+        bonusMarginalTax, taxNoBonus: noB.tax,
+        applied: withB.applied,
+        breakdown: [
+          { group: 'income', label: t('tax.rowAnnualIncome'), amount: gross, bold: true },
+          ...deductDetail.map(([k, v]) => ({ label: '  ' + k, amount: -v, cls: 'neg' })),
+          { label: t('tax.rowDeductTotal'), amount: -deductTotal, cls: 'neg' },
+          { label: t('tax.rowNetAssessable'), amount: withB.nti, bold: true },
+          ...allowDetail.map(([k, v]) => ({ label: '  ' + k, amount: -v, cls: 'neg' })),
+          { label: t('tax.rowAllowTotal'), amount: -allow, cls: 'neg' },
+          { label: t('tax.rowTaxable'), amount: withB.nci, bold: true },
+          { label: '  ' + t('hk.progressive'), amount: withB.prog },
+          { label: '  ' + t('hk.standard'), amount: withB.std },
+          { label: `${t('tax.rowTaxFinal')} (${t('hk.'+withB.applied)})`, amount: withB.tax, bold: true, cls: 'pos' },
+        ],
+      };
+    },
+  },
+};
+
+// Extra HK-specific i18n injected on all locales
+const HK_I18N_EXTRA = {
+  'en': {
+    'tax.personalAllowance': 'Personal allowance', 'tax.bracketsJson': 'Tax brackets (JSON)',
+    'tax.bracketsHint': 'Example: [{"upTo":20000,"rate":0.1},{"upTo":null,"rate":0.3}]. upTo=null means infinity.',
+    'tax.flatRate': 'Flat tax rate (%)',
+    'common.yes': 'Yes', 'common.no': 'No',
+    'hk.allowancesTitle': '🧍 Allowances',
+    'hk.deductionsTitle': '💳 Deductions (annual)',
+    'hk.maritalStatus': 'Marital status',
+    'hk.single': 'Single ($132,000)',
+    'hk.marriedJoint': 'Married, joint assessment ($264,000)',
+    'hk.marriedSep': 'Married, separate ($132,000)',
+    'hk.children': 'Children',
+    'hk.newbornChildren': 'Newborn this year (extra allowance)',
+    'hk.siblings': 'Siblings supported',
+    'hk.parentsUnder60Apart': 'Parents 55-59 (not living together)',
+    'hk.parentsUnder60Living': 'Parents 55-59 (living together)',
+    'hk.parentsOver60Apart': 'Parents 60+ (not living together)',
+    'hk.parentsOver60Living': 'Parents 60+ (living together)',
+    'hk.disabledSelf': 'Disabled person allowance (self)',
+    'hk.tvc': 'TVC / qualifying annuity (max $60,000)',
+    'hk.homeLoan': 'Home loan interest (max $100,000)',
+    'hk.selfEducation': 'Self-education (max $100,000)',
+    'hk.elderlyCare': 'Elderly residential care (per parent $100,000)',
+    'hk.vhis': 'VHIS premiums (per insured $8,000)',
+    'hk.donations': 'Approved charitable donations',
+    'hk.otherDeductions': 'Other deductions',
+    'hk.mpfMandatory': 'Mandatory MPF',
+    'hk.progressive': 'Progressive', 'hk.standard': 'Standard',
+  },
+  'zh-CN': {
+    'tax.personalAllowance': '个人免税额', 'tax.bracketsJson': '税率表（JSON）',
+    'tax.bracketsHint': '例：[{"upTo":20000,"rate":0.1},{"upTo":null,"rate":0.3}]。upTo=null 表示无上限。',
+    'tax.flatRate': '固定税率（%）',
+    'common.yes': '是', 'common.no': '否',
+    'hk.allowancesTitle': '🧍 免税额',
+    'hk.deductionsTitle': '💳 可扣除项（年度）',
+    'hk.maritalStatus': '婚姻状态',
+    'hk.single': '单身（$132,000）',
+    'hk.marriedJoint': '已婚合并评税（$264,000）',
+    'hk.marriedSep': '已婚分开评税（$132,000）',
+    'hk.children': '子女',
+    'hk.newbornChildren': '今年出生（额外加一份）',
+    'hk.siblings': '供养兄弟姊妹',
+    'hk.parentsUnder60Apart': '父母/祖父母 55-59 岁（非同住）',
+    'hk.parentsUnder60Living': '父母/祖父母 55-59 岁（同住）',
+    'hk.parentsOver60Apart': '父母/祖父母 60+岁（非同住）',
+    'hk.parentsOver60Living': '父母/祖父母 60+岁（同住）',
+    'hk.disabledSelf': '伤残人士津贴（本人）',
+    'hk.tvc': '自愿性 MPF / 合资格年金（上限 $60,000）',
+    'hk.homeLoan': '居所贷款利息（上限 $100,000）',
+    'hk.selfEducation': '个人进修开支（上限 $100,000）',
+    'hk.elderlyCare': '长者住宿照顾（每位父母 $100,000）',
+    'hk.vhis': '自愿医保（VHIS，每人 $8,000）',
+    'hk.donations': '慈善捐款',
+    'hk.otherDeductions': '其他可扣除金额',
+    'hk.mpfMandatory': '强制性 MPF',
+    'hk.progressive': '累进税率', 'hk.standard': '标准税率',
+  },
+  'zh-HK': {
+    'tax.personalAllowance': '個人免稅額', 'tax.bracketsJson': '稅率表（JSON）',
+    'tax.bracketsHint': '例：[{"upTo":20000,"rate":0.1},{"upTo":null,"rate":0.3}]。upTo=null 代表冇上限。',
+    'tax.flatRate': '單一稅率（%）',
+    'common.yes': '係', 'common.no': '否',
+    'hk.allowancesTitle': '🧍 免稅額',
+    'hk.deductionsTitle': '💳 可扣除項（年度）',
+    'hk.maritalStatus': '婚姻狀況',
+    'hk.single': '單身（$132,000）',
+    'hk.marriedJoint': '已婚合併評稅（$264,000）',
+    'hk.marriedSep': '已婚分開評稅（$132,000）',
+    'hk.children': '子女',
+    'hk.newbornChildren': '今年出生（額外加一份）',
+    'hk.siblings': '供養兄弟姊妹',
+    'hk.parentsUnder60Apart': '父母/祖父母 55-59 歲（非同住）',
+    'hk.parentsUnder60Living': '父母/祖父母 55-59 歲（同住）',
+    'hk.parentsOver60Apart': '父母/祖父母 60+歲（非同住）',
+    'hk.parentsOver60Living': '父母/祖父母 60+歲（同住）',
+    'hk.disabledSelf': '傷殘人士津貼（本人）',
+    'hk.tvc': '自願性 MPF / 合資格年金（上限 $60,000）',
+    'hk.homeLoan': '居所貸款利息（上限 $100,000）',
+    'hk.selfEducation': '個人進修開支（上限 $100,000）',
+    'hk.elderlyCare': '長者住宿照顧（每位父母 $100,000）',
+    'hk.vhis': '自願醫保（VHIS，每人 $8,000）',
+    'hk.donations': '認可慈善捐款',
+    'hk.otherDeductions': '其他可扣除金額',
+    'hk.mpfMandatory': '強制性 MPF',
+    'hk.progressive': '累進稅率', 'hk.standard': '標準稅率',
+  },
+};
+for (const loc in HK_I18N_EXTRA) Object.assign(I18N[loc], HK_I18N_EXTRA[loc]);
+
+// Extra CN-specific i18n (五险一金 + 个人所得税)
+const CN_I18N_EXTRA = {
+  'en': {
+    'cn.si.bases': '💼 Contribution bases (monthly)',
+    'cn.si.employee': '👤 Employee rates (%)',
+    'cn.si.employer': '🏢 Employer rates (%)',
+    'cn.si.city': 'City (memo only)',
+    'cn.si.cityPh': 'e.g. Beijing / Shanghai',
+    'cn.si.siMin': 'SI base lower bound',
+    'cn.si.siMax': 'SI base upper bound',
+    'cn.si.hfMin': 'Housing fund base lower bound',
+    'cn.si.hfMax': 'Housing fund base upper bound',
+    'cn.si.pension': 'Pension (养老)',
+    'cn.si.medical': 'Medical (医疗)',
+    'cn.si.unemp':   'Unemployment (失业)',
+    'cn.si.injury':  'Work-injury (工伤)',
+    'cn.si.maternity': 'Maternity (生育)',
+    'cn.si.hf':      'Housing fund (公积金)',
+    'cn.si.hint':    'Bases are clamped to the [min, max] range. Rates vary by city; defaults approximate Beijing 2025.',
+    'pension.flat.employee': 'Employee contribution (%)',
+    'pension.flat.employer': 'Employer contribution (%)',
+    'pension.flat.cap': 'Monthly base cap (0 = none)',
+    'pension.flat.hint': 'Deducted pre-tax as a flat % of salary (capped if set).',
+
+    'cn.iit.sadTitle':  '🎁 Special additional deductions (monthly)',
+    'cn.iit.sadHint':   'Enter amounts in ¥ / month where applicable. We will × 12 automatically.',
+    'cn.iit.sadChildren': 'Children (¥2,000/mo each)',
+    'cn.iit.sadInfants':  'Infants under 3 (¥2,000/mo each)',
+    'cn.iit.sadContEduAcademic':  'Academic continuing education (¥400/mo)',
+    'cn.iit.sadContEduVocational':'Vocational qualification cert. (¥/year)',
+    'cn.iit.sadLoan':     'First-home loan interest (¥1,000/mo)',
+    'cn.iit.sadRent':     'Housing rent (city tier)',
+    'cn.iit.rent.none':   'Not applicable',
+    'cn.iit.rent.t1':     'Tier-1 metro (¥1,500/mo)',
+    'cn.iit.rent.t2':     'Provincial capital / large city (¥1,100/mo)',
+    'cn.iit.rent.t3':     'Other cities (¥800/mo)',
+    'cn.iit.sadElderly':  'Elderly support (¥/mo, max 3,000)',
+    'cn.iit.sadSerious':  'Serious illness (¥/yr, deductible > 15,000, cap 80,000)',
+    'cn.iit.otherTitle':  '💳 Other deductions',
+    'cn.iit.otherDeductions': 'Other statutory deductions (annual)',
+    'cn.iit.donations':   'Charitable donations (annual, capped at 30% taxable)',
+    'cn.iit.bonusTitle':  '🎉 Year-end bonus taxation',
+    'cn.iit.bonusMethod': 'Method',
+    'cn.iit.bonus.separate': 'Separate (as 全年一次性奖金) — usually lower',
+    'cn.iit.bonus.combined': 'Combined with comprehensive income',
+    'cn.iit.bonusHint':   'Separate method allowed through 2027 per current policy; re-check each year.',
+    'cn.iit.row.gross':      'Annual comprehensive income',
+    'cn.iit.row.totalGross': 'Total gross (salary + bonus)',
+    'cn.iit.row.basic':      'Basic allowance (¥60,000/yr)',
+    'cn.iit.row.siPaid':     'Social insurance + housing fund paid',
+    'cn.iit.row.sad':        'Special additional deductions',
+    'cn.iit.row.seriousIllness': 'Serious illness deduction',
+    'cn.iit.row.other':      'Other statutory deductions',
+    'cn.iit.row.donations':  'Charitable donations (allowed)',
+    'cn.iit.row.taxable':    'Taxable income',
+    'cn.iit.row.compTax':    'Composite-income tax',
+    'cn.iit.row.bonusTax':   'Bonus tax (separate)',
+  },
+  'zh-CN': {
+    'cn.si.bases': '💼 缴费基数（月）',
+    'cn.si.employee': '👤 个人缴费比例（%）',
+    'cn.si.employer': '🏢 单位缴费比例（%）',
+    'cn.si.city': '城市（仅备注）',
+    'cn.si.cityPh': '如 北京 / 上海',
+    'cn.si.siMin': '社保基数下限',
+    'cn.si.siMax': '社保基数上限',
+    'cn.si.hfMin': '公积金基数下限',
+    'cn.si.hfMax': '公积金基数上限',
+    'cn.si.pension': '养老',
+    'cn.si.medical': '医疗',
+    'cn.si.unemp':   '失业',
+    'cn.si.injury':  '工伤',
+    'cn.si.maternity': '生育',
+    'cn.si.hf':      '住房公积金',
+    'cn.si.hint':    '若月薪超出基数范围会按上下限计算。各城市费率不同，默认值大致对应北京 2025。',
+    'pension.flat.employee': '个人缴费比例（%）',
+    'pension.flat.employer': '单位缴费比例（%）',
+    'pension.flat.cap': '月缴费基数上限（0 = 不封顶）',
+    'pension.flat.hint': '按工资固定比例在税前扣除（如设上限则封顶）。',
+
+    'cn.iit.sadTitle':  '🎁 专项附加扣除（月）',
+    'cn.iit.sadHint':   '填写每月可抵扣金额，系统自动 × 12 折算到年度。',
+    'cn.iit.sadChildren': '子女教育（2000/月/人）',
+    'cn.iit.sadInfants':  '3 岁以下婴幼儿（2000/月/人）',
+    'cn.iit.sadContEduAcademic':  '学历继续教育（400/月）',
+    'cn.iit.sadContEduVocational':'职业资格继续教育（元/年）',
+    'cn.iit.sadLoan':     '首套房贷利息（1000/月）',
+    'cn.iit.sadRent':     '住房租金（城市等级）',
+    'cn.iit.rent.none':   '不适用',
+    'cn.iit.rent.t1':     '直辖市 / 省会（1500/月）',
+    'cn.iit.rent.t2':     '其他地级市（1100/月）',
+    'cn.iit.rent.t3':     '其他城市（800/月）',
+    'cn.iit.sadElderly':  '赡养老人（元/月，最多 3000）',
+    'cn.iit.sadSerious':  '大病医疗（元/年，>1.5 万部分可扣，封顶 8 万）',
+    'cn.iit.otherTitle':  '💳 其他扣除',
+    'cn.iit.otherDeductions': '其他依法确定的扣除（企业年金等，按年）',
+    'cn.iit.donations':   '公益慈善捐赠（按年，上限为应纳税所得 30%）',
+    'cn.iit.bonusTitle':  '🎉 年终奖计税方式',
+    'cn.iit.bonusMethod': '计税方式',
+    'cn.iit.bonus.separate': '单独计税（全年一次性奖金）— 通常更省',
+    'cn.iit.bonus.combined': '并入综合所得',
+    'cn.iit.bonusHint':   '单独计税政策目前延续至 2027 年，每年请核对政策更新。',
+    'cn.iit.row.gross':      '年度综合所得',
+    'cn.iit.row.totalGross': '综合收入合计（工资 + 奖金）',
+    'cn.iit.row.basic':      '基本减除费用（60000/年）',
+    'cn.iit.row.siPaid':     '已缴五险一金（个人部分）',
+    'cn.iit.row.sad':        '专项附加扣除',
+    'cn.iit.row.seriousIllness': '大病医疗扣除',
+    'cn.iit.row.other':      '其他扣除',
+    'cn.iit.row.donations':  '公益捐赠（允许扣除部分）',
+    'cn.iit.row.taxable':    '应纳税所得额',
+    'cn.iit.row.compTax':    '综合所得税款',
+    'cn.iit.row.bonusTax':   '年终奖税款（单独计税）',
+  },
+  'zh-HK': {
+    'cn.si.bases': '💼 繳費基數（月）',
+    'cn.si.employee': '👤 個人繳費比例（%）',
+    'cn.si.employer': '🏢 單位繳費比例（%）',
+    'cn.si.city': '城市（僅備註）',
+    'cn.si.cityPh': '如 北京 / 上海',
+    'cn.si.siMin': '社保基數下限',
+    'cn.si.siMax': '社保基數上限',
+    'cn.si.hfMin': '公積金基數下限',
+    'cn.si.hfMax': '公積金基數上限',
+    'cn.si.pension': '養老',
+    'cn.si.medical': '醫療',
+    'cn.si.unemp':   '失業',
+    'cn.si.injury':  '工傷',
+    'cn.si.maternity': '生育',
+    'cn.si.hf':      '住房公積金',
+    'cn.si.hint':    '若月薪超出基數範圍會按上下限計算。各城市費率不同，預設值大致對應北京 2025。',
+    'pension.flat.employee': '個人繳費比例（%）',
+    'pension.flat.employer': '單位繳費比例（%）',
+    'pension.flat.cap': '月繳費基數上限（0 = 唔封頂）',
+    'pension.flat.hint': '按工資固定比例喺稅前扣除（有上限就封頂）。',
+
+    'cn.iit.sadTitle':  '🎁 專項附加扣除（月）',
+    'cn.iit.sadHint':   '填寫每月可抵扣金額，系統自動 × 12 折算到年度。',
+    'cn.iit.sadChildren': '子女教育（2000/月/人）',
+    'cn.iit.sadInfants':  '3 歲以下嬰幼兒（2000/月/人）',
+    'cn.iit.sadContEduAcademic':  '學歷繼續教育（400/月）',
+    'cn.iit.sadContEduVocational':'職業資格繼續教育（元/年）',
+    'cn.iit.sadLoan':     '首套房貸利息（1000/月）',
+    'cn.iit.sadRent':     '住房租金（城市等級）',
+    'cn.iit.rent.none':   '不適用',
+    'cn.iit.rent.t1':     '直轄市 / 省會（1500/月）',
+    'cn.iit.rent.t2':     '其他地級市（1100/月）',
+    'cn.iit.rent.t3':     '其他城市（800/月）',
+    'cn.iit.sadElderly':  '贍養老人（元/月，最多 3000）',
+    'cn.iit.sadSerious':  '大病醫療（元/年，>1.5 萬部分可扣，封頂 8 萬）',
+    'cn.iit.otherTitle':  '💳 其他扣除',
+    'cn.iit.otherDeductions': '其他依法確定的扣除（企業年金等，按年）',
+    'cn.iit.donations':   '公益慈善捐贈（按年，上限為應納稅所得 30%）',
+    'cn.iit.bonusTitle':  '🎉 年終獎計稅方式',
+    'cn.iit.bonusMethod': '計稅方式',
+    'cn.iit.bonus.separate': '單獨計稅（全年一次性獎金）— 通常更省',
+    'cn.iit.bonus.combined': '並入綜合所得',
+    'cn.iit.bonusHint':   '單獨計稅政策目前延續至 2027 年，每年請核對政策更新。',
+    'cn.iit.row.gross':      '年度綜合所得',
+    'cn.iit.row.totalGross': '綜合收入合計（工資 + 獎金）',
+    'cn.iit.row.basic':      '基本減除費用（60000/年）',
+    'cn.iit.row.siPaid':     '已繳五險一金（個人部分）',
+    'cn.iit.row.sad':        '專項附加扣除',
+    'cn.iit.row.seriousIllness': '大病醫療扣除',
+    'cn.iit.row.other':      '其他扣除',
+    'cn.iit.row.donations':  '公益捐贈（允許扣除部分）',
+    'cn.iit.row.taxable':    '應納稅所得額',
+    'cn.iit.row.compTax':    '綜合所得稅款',
+    'cn.iit.row.bonusTax':   '年終獎稅款（單獨計稅）',
+  },
+};
+for (const loc in CN_I18N_EXTRA) Object.assign(I18N[loc], CN_I18N_EXTRA[loc]);
+
+/* ============ 5. Pension Providers ============ */
+const PENSION_PROVIDERS = {
+  'none': {
+    id: 'none',
+    name: { 'en': 'None', 'zh-CN': '无', 'zh-HK': '冇' },
+    defaultConfig: {},
+    compute(monthly, bonus) {
+      return { employeeMonthly: 0, employerMonthly: 0, annual: 0, employerAnnual: 0, bonusPortion: 0 };
+    },
+  },
+  'flat-percent': {
+    id: 'flat-percent',
+    name: { 'en': 'Flat % of salary', 'zh-CN': '工资固定比例', 'zh-HK': '薪金固定比例' },
+    defaultConfig: { employeePercent: 5, employerPercent: 5, monthlyCap: 0 },
+    renderConfig(cfg, t) {
+      const v = (k, d) => (cfg[k] != null ? cfg[k] : d);
+      return `<div class="row">
+        <div><label>${t('pension.flat.employee')}</label>
+          <input id="pflatEmp" type="number" min="0" max="100" step="0.1" value="${v('employeePercent',5)}" /></div>
+        <div><label>${t('pension.flat.employer')}</label>
+          <input id="pflatEr" type="number" min="0" max="100" step="0.1" value="${v('employerPercent',5)}" /></div>
+      </div>
+      <div class="row">
+        <div><label>${t('pension.flat.cap')}</label>
+          <input id="pflatCap" type="number" min="0" step="100" value="${v('monthlyCap',0)}" /></div>
+        <div></div>
+      </div>
+      <div class="hint">${t('pension.flat.hint')}</div>`;
+    },
+    readConfig() {
+      const g = (id) => document.getElementById(id);
+      const n = (id) => Number(g(id)?.value) || 0;
+      return { employeePercent: n('pflatEmp'), employerPercent: n('pflatEr'), monthlyCap: n('pflatCap') };
+    },
+    compute(monthly, bonus, { config }) {
+      const ePct = (config.employeePercent || 0) / 100;
+      const rPct = (config.employerPercent || 0) / 100;
+      const cap = Number(config.monthlyCap) || 0;
+      const baseForCalc = cap > 0 ? Math.min(monthly, cap) : monthly;
+      const employeeMonthly = baseForCalc * ePct;
+      const employerMonthly = baseForCalc * rPct;
+      const annual = employeeMonthly * 12 + (bonus || 0) * ePct;
+      const employerAnnual = employerMonthly * 12 + (bonus || 0) * rPct;
+      return {
+        employeeMonthly, employerMonthly, annual, employerAnnual,
+        bonusPortion: (bonus || 0) * ePct,
+      };
+    },
+  },
+  'hk-mpf': {
+    id: 'hk-mpf',
+    name: { 'en': 'Hong Kong MPF (5% / cap $1,500/mo)', 'zh-CN': '香港强积金 (5%/封顶$1,500/月)', 'zh-HK': '香港強積金 (5%/封頂$1,500/月)' },
+    defaultConfig: {},
+    compute(monthly, bonus) {
+      const MIN_RELEVANT = 7100, MAX_RELEVANT = 30000, ANNUAL_CAP = 18000;
+      const s = Number(monthly) || 0, b = Number(bonus) || 0;
+      let m = 0;
+      if (s >= MIN_RELEVANT) m = Math.min(s, MAX_RELEVANT) * 0.05;
+      const annualRegular = m * 12;
+      const remainCap = Math.max(0, ANNUAL_CAP - annualRegular);
+      const bonusMPF = Math.min(b * 0.05, remainCap);
+      const annual = annualRegular + bonusMPF;
+      return {
+        employeeMonthly: m, employerMonthly: m,
+        annual, employerAnnual: annual,
+        bonusPortion: bonusMPF,
+      };
+    },
+  },
+
+  // ========= China Social Insurance + Housing Fund (五险一金) =========
+  //
+  // Rates and base limits vary by city. Defaults below correspond roughly to
+  // Beijing 2025-07 ~ 2026-06. Edit the numbers to match your own city.
+  //
+  // Employee side (deducted from pre-tax salary):
+  //   养老 8%  医疗 2%  失业 0.5%  公积金 5%-12% (default 12%)
+  // Employer side (added to your total comp / asset):
+  //   养老 16% 医疗 9.5% 失业 0.5% 工伤 0.2% 生育 0.8% 公积金 5%-12%
+  //
+  // Base is clamped independently for social-insurance (SI) and for the
+  // housing fund (HF), because those caps/floors typically differ.
+  'cn-social-insurance': {
+    id: 'cn-social-insurance',
+    name: {
+      'en': 'China Social Insurance + Housing Fund (五险一金)',
+      'zh-CN': '中国五险一金（社保 + 公积金）',
+      'zh-HK': '中國五險一金（社保 + 公積金）',
+    },
+    defaultConfig: {
+      cityName: '',
+      siBaseMin: 6821, siBaseMax: 35283,
+      hfBaseMin: 2420, hfBaseMax: 36921,
+      // employee (个人) %
+      pensionRate: 8, medicalRate: 2, unemploymentRate: 0.5, hfEmployeeRate: 12,
+      // employer (单位) %
+      employerPensionRate: 16, employerMedicalRate: 9.5,
+      employerUnemploymentRate: 0.5, employerInjuryRate: 0.2,
+      employerMaternityRate: 0.8, employerHfRate: 12,
+    },
+    renderConfig(cfg, t) {
+      const v = (k, dflt) => (cfg[k] != null ? cfg[k] : dflt);
+      return `
+        <h4 style="margin-bottom:10px;font-size:14px;color:var(--muted)">${t('cn.si.bases')}</h4>
+        <div class="row">
+          <div><label>${t('cn.si.city')}</label><input id="cnSiCity" type="text" value="${escapeAttr(v('cityName',''))}" placeholder="${t('cn.si.cityPh')}" /></div>
+          <div><label>${t('cn.si.siMin')}</label><input id="cnSiMin" type="number" min="0" step="1" value="${v('siBaseMin',0)}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.si.siMax')}</label><input id="cnSiMax" type="number" min="0" step="1" value="${v('siBaseMax',0)}" /></div>
+          <div><label>${t('cn.si.hfMin')}</label><input id="cnHfMin" type="number" min="0" step="1" value="${v('hfBaseMin',0)}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.si.hfMax')}</label><input id="cnHfMax" type="number" min="0" step="1" value="${v('hfBaseMax',0)}" /></div>
+          <div></div>
+        </div>
+        <h4 style="margin:16px 0 10px;font-size:14px;color:var(--muted)">${t('cn.si.employee')}</h4>
+        <div class="row">
+          <div><label>${t('cn.si.pension')}</label><input id="cnEmpPension" type="number" min="0" step="0.1" value="${v('pensionRate',8)}" /></div>
+          <div><label>${t('cn.si.medical')}</label><input id="cnEmpMedical" type="number" min="0" step="0.1" value="${v('medicalRate',2)}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.si.unemp')}</label><input id="cnEmpUnemp" type="number" min="0" step="0.1" value="${v('unemploymentRate',0.5)}" /></div>
+          <div><label>${t('cn.si.hf')}</label><input id="cnEmpHf" type="number" min="0" max="12" step="0.5" value="${v('hfEmployeeRate',12)}" /></div>
+        </div>
+        <h4 style="margin:16px 0 10px;font-size:14px;color:var(--muted)">${t('cn.si.employer')}</h4>
+        <div class="row">
+          <div><label>${t('cn.si.pension')}</label><input id="cnErPension" type="number" min="0" step="0.1" value="${v('employerPensionRate',16)}" /></div>
+          <div><label>${t('cn.si.medical')}</label><input id="cnErMedical" type="number" min="0" step="0.1" value="${v('employerMedicalRate',9.5)}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.si.unemp')}</label><input id="cnErUnemp" type="number" min="0" step="0.1" value="${v('employerUnemploymentRate',0.5)}" /></div>
+          <div><label>${t('cn.si.injury')}</label><input id="cnErInjury" type="number" min="0" step="0.1" value="${v('employerInjuryRate',0.2)}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('cn.si.maternity')}</label><input id="cnErMaternity" type="number" min="0" step="0.1" value="${v('employerMaternityRate',0.8)}" /></div>
+          <div><label>${t('cn.si.hf')}</label><input id="cnErHf" type="number" min="0" max="12" step="0.5" value="${v('employerHfRate',12)}" /></div>
+        </div>
+        <div class="hint">${t('cn.si.hint')}</div>
+      `;
+    },
+    readConfig() {
+      const g = (id) => document.getElementById(id);
+      const num = (id) => Number(g(id)?.value) || 0;
+      const txt = (id) => (g(id)?.value || '');
+      return {
+        cityName: txt('cnSiCity'),
+        siBaseMin: num('cnSiMin'), siBaseMax: num('cnSiMax'),
+        hfBaseMin: num('cnHfMin'), hfBaseMax: num('cnHfMax'),
+        pensionRate: num('cnEmpPension'), medicalRate: num('cnEmpMedical'),
+        unemploymentRate: num('cnEmpUnemp'), hfEmployeeRate: num('cnEmpHf'),
+        employerPensionRate: num('cnErPension'), employerMedicalRate: num('cnErMedical'),
+        employerUnemploymentRate: num('cnErUnemp'), employerInjuryRate: num('cnErInjury'),
+        employerMaternityRate: num('cnErMaternity'), employerHfRate: num('cnErHf'),
+      };
+    },
+    compute(monthly, bonus, { config }) {
+      const s = Number(monthly) || 0;
+      const c = config || {};
+      const clamp = (x, lo, hi) => {
+        const L = Math.max(0, Number(lo) || 0);
+        const H = Math.max(L, Number(hi) || 0);
+        if (H === 0) return x;
+        return Math.min(Math.max(x, L), H);
+      };
+      const siBase = clamp(s, c.siBaseMin, c.siBaseMax);
+      const hfBase = clamp(s, c.hfBaseMin, c.hfBaseMax);
+
+      const pct = (r) => (Number(r) || 0) / 100;
+      const empPension   = siBase * pct(c.pensionRate);
+      const empMedical   = siBase * pct(c.medicalRate);
+      const empUnemp     = siBase * pct(c.unemploymentRate);
+      const empHf        = hfBase * pct(c.hfEmployeeRate);
+      const erPension    = siBase * pct(c.employerPensionRate);
+      const erMedical    = siBase * pct(c.employerMedicalRate);
+      const erUnemp      = siBase * pct(c.employerUnemploymentRate);
+      const erInjury     = siBase * pct(c.employerInjuryRate);
+      const erMaternity  = siBase * pct(c.employerMaternityRate);
+      const erHf         = hfBase * pct(c.employerHfRate);
+
+      const employeeMonthly = empPension + empMedical + empUnemp + empHf;
+      const employerMonthly = erPension + erMedical + erUnemp + erInjury + erMaternity + erHf;
+
+      // China annual-bonus (年终奖) does NOT attract social-insurance or HF
+      // contributions in the common scheme: those are based on monthly wage
+      // only. So we return bonusPortion = 0.
+      return {
+        employeeMonthly, employerMonthly,
+        annual: employeeMonthly * 12,
+        employerAnnual: employerMonthly * 12,
+        bonusPortion: 0,
+        // detailed breakdown for UIs that want it
+        components: {
+          siBase, hfBase,
+          employee: {
+            pension: empPension, medical: empMedical,
+            unemployment: empUnemp, housingFund: empHf,
+          },
+          employer: {
+            pension: erPension, medical: erMedical, unemployment: erUnemp,
+            injury: erInjury, maternity: erMaternity, housingFund: erHf,
+          },
+        },
+      };
+    },
+  },
+};
+
+/* ============ 6. Regions (sensible defaults) ============ */
+const REGIONS = {
+  'HK': {
+    name: { 'en': 'Hong Kong 🇭🇰', 'zh-CN': '🇭🇰 香港', 'zh-HK': '🇭🇰 香港' },
+    currency: 'HKD', fxRate: 1, lang: 'zh-HK',
+    tax: 'hk-salaries-tax', pension: 'hk-mpf', holidayKey: 'HK',
+  },
+  'CN': {
+    name: { 'en': 'Mainland China 🇨🇳', 'zh-CN': '🇨🇳 中国大陆', 'zh-HK': '🇨🇳 中國大陸' },
+    currency: 'CNY', fxRate: 1, lang: 'zh-CN',
+    // Dedicated CN tax + social-insurance provider
+    tax: 'cn-iit', pension: 'cn-social-insurance', holidayKey: 'CN',
+  },
+  'US': {
+    name: { 'en': 'United States 🇺🇸', 'zh-CN': '🇺🇸 美国', 'zh-HK': '🇺🇸 美國' },
+    currency: 'USD', fxRate: 1, lang: 'en',
+    tax: 'simple-brackets', pension: 'flat-percent', holidayKey: 'US',
+    overrides: {
+      taxConfig: { personalAllowance: 14600, bracketsJson: '[{"upTo":11600,"rate":0.10},{"upTo":47150,"rate":0.12},{"upTo":100525,"rate":0.22},{"upTo":191950,"rate":0.24},{"upTo":243725,"rate":0.32},{"upTo":609350,"rate":0.35},{"upTo":null,"rate":0.37}]' },
+      pensionConfig: { employeePercent: 6, employerPercent: 3, monthlyCap: 0 },
+    },
+  },
+  'UK': {
+    name: { 'en': 'United Kingdom 🇬🇧', 'zh-CN': '🇬🇧 英国', 'zh-HK': '🇬🇧 英國' },
+    currency: 'GBP', fxRate: 1, lang: 'en',
+    tax: 'simple-brackets', pension: 'flat-percent', holidayKey: 'UK',
+    overrides: {
+      taxConfig: { personalAllowance: 12570, bracketsJson: '[{"upTo":37700,"rate":0.20},{"upTo":125140,"rate":0.40},{"upTo":null,"rate":0.45}]' },
+      pensionConfig: { employeePercent: 5, employerPercent: 3, monthlyCap: 0 },
+    },
+  },
+  'SG': {
+    name: { 'en': 'Singapore 🇸🇬', 'zh-CN': '🇸🇬 新加坡', 'zh-HK': '🇸🇬 新加坡' },
+    currency: 'SGD', fxRate: 1, lang: 'en',
+    tax: 'simple-brackets', pension: 'flat-percent', holidayKey: 'SG',
+    overrides: {
+      taxConfig: { personalAllowance: 20000, bracketsJson: '[{"upTo":10000,"rate":0.02},{"upTo":10000,"rate":0.035},{"upTo":40000,"rate":0.07},{"upTo":40000,"rate":0.115},{"upTo":40000,"rate":0.15},{"upTo":40000,"rate":0.18},{"upTo":40000,"rate":0.19},{"upTo":null,"rate":0.22}]' },
+      pensionConfig: { employeePercent: 20, employerPercent: 17, monthlyCap: 6800 },
+    },
+  },
+  'JP': {
+    name: { 'en': 'Japan 🇯🇵', 'zh-CN': '🇯🇵 日本', 'zh-HK': '🇯🇵 日本' },
+    currency: 'JPY', fxRate: 1, lang: 'en',
+    tax: 'simple-brackets', pension: 'flat-percent', holidayKey: 'JP',
+    overrides: {
+      taxConfig: { personalAllowance: 480000, bracketsJson: '[{"upTo":1950000,"rate":0.05},{"upTo":3300000,"rate":0.10},{"upTo":6950000,"rate":0.20},{"upTo":9000000,"rate":0.23},{"upTo":18000000,"rate":0.33},{"upTo":40000000,"rate":0.40},{"upTo":null,"rate":0.45}]' },
+      pensionConfig: { employeePercent: 15, employerPercent: 15, monthlyCap: 0 },
+    },
+  },
+  'CUSTOM': {
+    name: { 'en': '🌐 Other / Custom', 'zh-CN': '🌐 其他/自定义', 'zh-HK': '🌐 其他/自訂' },
+    currency: 'USD', fxRate: 1, lang: 'en',
+    tax: 'flat-rate', pension: 'none', holidayKey: 'CUSTOM',
+  },
+};
+
+/* ============ 7. Defaults (no personal data) ============ */
+const DEFAULTS = {
+  locale: 'en', region: 'CUSTOM', currency: 'USD',
+  fxRate: 1, decimals: 2, theme: 'dark',
+  salary: 0, bonusMonths: 0, startDate: '',
+  workStart: '09:00', workEnd: '18:00',
+  lunchStart: '12:00', lunchEnd: '13:00',
+  yearlyGoal: 0,
+  taxProvider: 'none', taxConfig: {},
+  pensionProvider: 'none', pensionConfig: {},
+  wizardDone: false,
+};
+const STORAGE_KEY = 'paypulse.state.v1';
+
+/* ============ 8. State ============ */
+let STATE = loadState();
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { config: { ...DEFAULTS }, daily: {} };
+    const s = JSON.parse(raw);
+    return {
+      config: { ...DEFAULTS, ...(s.config || {}) },
+      daily: s.daily || {},
+    };
+  } catch { return { config: { ...DEFAULTS }, daily: {} }; }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE)); }
+
+/* ============ 9. Utils ============ */
+const $ = (id) => document.getElementById(id);
+const pad = (n) => n < 10 ? '0' + n : '' + n;
+const ymd = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function escapeAttr(s) { return escapeHtml(s); }
+function parseDate(str) {
+  if (!str) return null;
+  const [y, m, d] = str.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d);
+}
+function parseTime(str) { const [h, m] = (str || '0:0').split(':').map(Number); return { h: h || 0, m: m || 0 }; }
+function todayAt(t) { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate(), t.h, t.m, 0, 0); }
+function startOfDay(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+
+/* ============ 10. i18n helpers ============ */
+function t(key, params) {
+  const loc = STATE.config.locale || 'en';
+  const dict = I18N[loc] || I18N['en'];
+  let v = dict[key];
+  if (v == null) v = I18N['en'][key];
+  if (v == null) return key;
+  if (Array.isArray(v)) return v;
+  if (params) {
+    v = v.replace(/\{(\w+)\}/g, (_, k) => params[k] != null ? params[k] : `{${k}}`);
+  }
+  return v;
+}
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const v = t(key);
+    if (typeof v === 'string') el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  document.documentElement.setAttribute('lang', STATE.config.locale);
+  document.title = '💰 PayPulse — ' + t('app.subtitle');
+}
+
+/* ============ 11. Formatting ============ */
+function fmtMoney(rawAmount, decimalsOverride) {
+  const cfg = STATE.config;
+  const cur = CURRENCIES[cfg.currency] || CURRENCIES.USD;
+  const dec = decimalsOverride != null ? decimalsOverride : (cfg.decimals != null ? Number(cfg.decimals) : cur.decimals);
+  const fx = Number(cfg.fxRate) || 1;
+  const v = (Number(rawAmount) || 0) * fx;
+  const s = v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  return cur.symbol + ' ' + s;
+}
+function fmtSigned(rawAmount, decimals) {
+  const v = Number(rawAmount) || 0;
+  return (v > 0 ? '+' : '') + fmtMoney(rawAmount, decimals);
+}
+
+/* ============ 12. Holidays ============ */
+function currentHolidayMap() {
+  const key = (REGIONS[STATE.config.region] || REGIONS.CUSTOM).holidayKey || 'CUSTOM';
+  return HOLIDAYS[key] || {};
+}
+function holidayName(dateStr) {
+  const rec = currentHolidayMap()[dateStr];
+  if (!rec) return null;
+  if (rec.type === 'workday') return null; // make-up workdays aren't "holidays"
+  return rec[STATE.config.locale] || rec['en'] || Object.values(rec).find(v => typeof v === 'string') || null;
+}
+function isMakeupWorkDay(date) {
+  const rec = currentHolidayMap()[ymd(date)];
+  return !!(rec && rec.type === 'workday');
+}
+function isPublicHoliday(date) {
+  const rec = currentHolidayMap()[ymd(date)];
+  return !!(rec && rec.type !== 'workday');
+}
+
+/* ============ 13. Workday logic ============
+ *  Natural workday = weekday that isn't a public holiday,
+ *                    OR a weekend that is explicitly marked as a make-up
+ *                    workday (e.g. China 调休).
+ */
+function isNaturalWorkDay(date) {
+  if (isMakeupWorkDay(date)) return true;
+  const d = date.getDay();
+  if (d === 0 || d === 6) return false;
+  return !isPublicHoliday(date);
+}
+function getDayType(date) { return (STATE.daily[ymd(date)] || {}).type || 'normal'; }
+function isEffectiveWorkDay(date) {
+  const nat = isNaturalWorkDay(date);
+  const type = getDayType(date);
+  if (type === 'leave') return false;
+  if (type === 'extra') return true;
+  return nat;
+}
+function countEffectiveInRange(a, b) {
+  let n = 0; const cur = startOfDay(a), last = startOfDay(b);
+  while (cur <= last) { if (isEffectiveWorkDay(cur)) n++; cur.setDate(cur.getDate() + 1); }
+  return n;
+}
+function countNaturalInMonth(y, m) {
+  const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+  let n = 0; const cur = new Date(first);
+  while (cur <= last) { if (isNaturalWorkDay(cur)) n++; cur.setDate(cur.getDate() + 1); }
+  return n;
+}
+
+/* ============ 14. Salary rates ============ */
+function workSecondsPerDay() {
+  const c = STATE.config;
+  const ws = parseTime(c.workStart), we = parseTime(c.workEnd);
+  const ls = parseTime(c.lunchStart), le = parseTime(c.lunchEnd);
+  const total = (we.h*3600 + we.m*60) - (ws.h*3600 + ws.m*60);
+  const lunch = (le.h*3600 + le.m*60) - (ls.h*3600 + ls.m*60);
+  return Math.max(0, total - Math.max(0, lunch));
+}
+function workedSecondsToday(now) {
+  const c = STATE.config;
+  const ws = todayAt(parseTime(c.workStart));
+  const we = todayAt(parseTime(c.workEnd));
+  const ls = todayAt(parseTime(c.lunchStart));
+  const le = todayAt(parseTime(c.lunchEnd));
+  if (now <= ws) return 0;
+  const end = now >= we ? we : now;
+  let sec = 0;
+  const morningEnd = end < ls ? end : ls;
+  if (morningEnd > ws) sec += (morningEnd - ws) / 1000;
+  if (end > le) sec += (end - le) / 1000;
+  return Math.max(0, sec);
+}
+function getDailyRate(y, m) {
+  const days = countNaturalInMonth(y, m);
+  return days > 0 ? (Number(STATE.config.salary) || 0) / days : 0;
+}
+function fullDaySalary(date) {
+  return isEffectiveWorkDay(date) ? getDailyRate(date.getFullYear(), date.getMonth()) : 0;
+}
+function todaySalaryLive(now) {
+  const today = startOfDay(now);
+  if (!isEffectiveWorkDay(today)) return { earned: 0, progress: 0 };
+  const workSec = workSecondsPerDay();
+  const daily = getDailyRate(today.getFullYear(), today.getMonth());
+  const perSec = workSec > 0 ? daily / workSec : 0;
+  const sec = workedSecondsToday(now);
+  return { earned: sec * perSec, progress: workSec > 0 ? Math.min(1, sec / workSec) : 0 };
+}
+
+/* ============ 15. Countdown & status ============ */
+function formatDuration(ms) {
+  if (ms <= 0) return '0s';
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  if (h > 0) return `${h}h ${pad(m)}m ${pad(sec)}s`;
+  if (m > 0) return `${m}m ${pad(sec)}s`;
+  return `${sec}s`;
+}
+function getCountdown(now) {
+  const today = startOfDay(now);
+  const c = STATE.config;
+  const ws = todayAt(parseTime(c.workStart)), we = todayAt(parseTime(c.workEnd));
+  const ls = todayAt(parseTime(c.lunchStart)), le = todayAt(parseTime(c.lunchEnd));
+  if (isEffectiveWorkDay(today)) {
+    if (now < ws) return { icon: '☕', label: t('cd.toWork'), ms: ws - now };
+    if (now < ls) return { icon: '🍜', label: t('cd.toLunch'), ms: ls - now };
+    if (now < le) return { icon: '💼', label: t('cd.toAfterLunch'), ms: le - now };
+    if (now < we) return { icon: '🏃', label: t('cd.toEnd'), ms: we - now };
+    return { icon: '✅', label: t('cd.doneToday'), ms: 0 };
+  }
+  let next = addDays(today, 1);
+  for (let i = 0; i < 60; i++) { if (isEffectiveWorkDay(next)) break; next = addDays(next, 1); }
+  const nw = parseTime(c.workStart);
+  const nextStart = new Date(next.getFullYear(), next.getMonth(), next.getDate(), nw.h, nw.m);
+  return { icon: '🛏️', label: t('cd.toNextWork'), ms: nextStart - now };
+}
+function getNextHoliday(now) {
+  const today = startOfDay(now);
+  const map = currentHolidayMap();
+  const list = Object.keys(map).sort();
+  for (const dstr of list) {
+    if (map[dstr] && map[dstr].type === 'workday') continue; // skip make-up days
+    const d = parseDate(dstr);
+    if (d && d >= today) {
+      const days = Math.round((d - today) / 86400000);
+      return { date: dstr, name: holidayName(dstr), days };
+    }
+  }
+  return null;
+}
+function getStatus(now, today, startDate) {
+  if (startDate && today < startDate) return { cls: 'offwork', text: t('status.beforeStart') };
+  const type = getDayType(today);
+  if (type === 'leave') return { cls: 'holiday', text: t('status.leave') };
+  if (!isEffectiveWorkDay(today)) {
+    const d = today.getDay();
+    if (d === 0 || d === 6) return { cls: 'offwork', text: t('status.weekend') };
+    return { cls: 'holiday', text: t('status.holiday', { name: holidayName(ymd(today)) || '' }) };
+  }
+  const c = STATE.config;
+  const ws = todayAt(parseTime(c.workStart)), we = todayAt(parseTime(c.workEnd));
+  const ls = todayAt(parseTime(c.lunchStart)), le = todayAt(parseTime(c.lunchEnd));
+  if (now < ws) return { cls: 'offwork', text: t('status.beforeWork') };
+  if (now >= we) return { cls: 'offwork', text: t('status.afterWork') };
+  if (now >= ls && now < le) return { cls: 'resting', text: t('status.lunch') };
+  return { cls: 'working', text: t('status.working') };
+}
+
+/* ============ 16. Core compute ============ */
+function compute() {
+  const now = new Date();
+  const cfg = STATE.config;
+  const startDate = parseDate(cfg.startDate);
+  const today = startOfDay(now);
+
+  const workSec = workSecondsPerDay();
+  const dailyRate = getDailyRate(today.getFullYear(), today.getMonth());
+  const hourlyRate = workSec > 0 ? dailyRate / (workSec / 3600) : 0;
+  const perSecRate = workSec > 0 ? dailyRate / workSec : 0;
+
+  const todayLive = (startDate && today < startDate) ? { earned: 0, progress: 0 } : todaySalaryLive(now);
+  const todayStock = Number((STATE.daily[ymd(today)] || {}).stock) || 0;
+  const todayTotal = todayLive.earned + todayStock;
+
+  // Month
+  const monthFirst = new Date(today.getFullYear(), today.getMonth(), 1);
+  const countStart = (startDate && startDate > monthFirst) ? startDate : monthFirst;
+  let monthSalary = 0, monthStock = 0;
+  if (!startDate || countStart <= today) {
+    const prev = addDays(today, -1);
+    if (prev >= countStart) {
+      const cur = new Date(countStart);
+      while (cur <= prev) {
+        monthSalary += fullDaySalary(cur);
+        monthStock += Number((STATE.daily[ymd(cur)] || {}).stock) || 0;
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    monthSalary += todayLive.earned;
+    monthStock += todayStock;
+  }
+  const monthTotal = monthSalary + monthStock;
+  const monthLast = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const expectStart = (startDate && startDate > monthFirst) ? startDate : monthFirst;
+  const monthExpectedDays = countEffectiveInRange(expectStart, monthLast);
+  const monthExpected = monthExpectedDays * dailyRate;
+  const monthProgress = monthExpected > 0 ? Math.min(1, monthSalary / monthExpected) : 0;
+
+  // Grand / year
+  let grandSalary = 0, grandStock = 0, workedDays = 0;
+  let yearSalary = 0, yearStock = 0;
+  const yearStart = new Date(today.getFullYear(), 0, 1);
+  if (startDate && startDate <= today) {
+    const accumulate = (from) => {
+      let salarySum = 0, days = 0;
+      const sIter = new Date(from.getFullYear(), from.getMonth(), 1);
+      const eIter = new Date(today.getFullYear(), today.getMonth(), 1);
+      const cur = new Date(sIter);
+      while (cur <= eIter) {
+        const y = cur.getFullYear(), m = cur.getMonth();
+        const isFirst = (y === from.getFullYear() && m === from.getMonth());
+        const isCur = (y === today.getFullYear() && m === today.getMonth());
+        const rs = isFirst ? from : new Date(y, m, 1);
+        const re = isCur ? addDays(today, -1) : new Date(y, m + 1, 0);
+        if (re >= rs) {
+          const d = countEffectiveInRange(rs, re);
+          salarySum += d * getDailyRate(y, m);
+          days += d;
+        }
+        cur.setMonth(cur.getMonth() + 1);
+      }
+      return { salarySum, days };
+    };
+    const g = accumulate(startDate);
+    grandSalary = g.salarySum + todayLive.earned;
+    workedDays = g.days + (isEffectiveWorkDay(today) ? todayLive.progress : 0);
+    const yStart = startDate > yearStart ? startDate : yearStart;
+    const yg = accumulate(yStart);
+    yearSalary = yg.salarySum + todayLive.earned;
+    for (const k of Object.keys(STATE.daily)) {
+      const d = parseDate(k); if (!d) continue;
+      if (d >= startDate && d <= today) grandStock += Number(STATE.daily[k].stock) || 0;
+      if (d >= yearStart && d <= today) yearStock += Number(STATE.daily[k].stock) || 0;
+    }
+  }
+  const grandTotal = grandSalary + grandStock;
+  const yearTotal = yearSalary + yearStock;
+  const goal = Number(cfg.yearlyGoal) || 0;
+  const goalProgress = goal > 0 ? Math.min(1, yearTotal / goal) : 0;
+
+  // Pension
+  const salary = Number(cfg.salary) || 0;
+  const bonus = salary * (Number(cfg.bonusMonths) || 0);
+  const baseIncome = salary * 12;
+  const grossAnnual = baseIncome + bonus;
+  const pensionProv = PENSION_PROVIDERS[cfg.pensionProvider] || PENSION_PROVIDERS.none;
+  const pension = pensionProv.compute(salary, bonus, { config: cfg.pensionConfig || {} });
+
+  // Tax
+  const taxProv = TAX_PROVIDERS[cfg.taxProvider] || TAX_PROVIDERS.none;
+  const taxResult = taxProv.compute(grossAnnual, {
+    config: cfg.taxConfig || {}, t, pension, bonus, baseIncome,
+  });
+
+  const taxNoBonus = taxResult.taxNoBonus != null
+    ? taxResult.taxNoBonus
+    : (grossAnnual > 0 ? taxResult.tax * (baseIncome / grossAnnual) : 0);
+  const bonusMarginalTax = taxResult.bonusMarginalTax != null
+    ? taxResult.bonusMarginalTax
+    : Math.max(0, taxResult.tax - taxNoBonus);
+
+  const monthlyTax = taxNoBonus / 12;
+  const monthlyCash = salary - pension.employeeMonthly - monthlyTax;
+  const monthlyAsset = salary + pension.employerMonthly - monthlyTax;
+  const monthlyPensionAccount = pension.employeeMonthly + pension.employerMonthly;
+  const annualCash = grossAnnual - pension.annual - taxResult.tax;
+  const annualAsset = annualCash + pension.annual + pension.employerAnnual;
+  const annualPensionAccount = pension.annual + pension.employerAnnual;
+  const effectiveRate = grossAnnual > 0 ? taxResult.tax / grossAnnual : 0;
+
+  return {
+    now, workSec, dailyRate, hourlyRate, perSecRate,
+    todayLive, todayStock, todayTotal,
+    monthSalary, monthStock, monthTotal, monthExpected, monthProgress,
+    grandSalary, grandStock, grandTotal, workedDays,
+    yearTotal, goal, goalProgress,
+    salary, bonus, baseIncome, grossAnnual,
+    pension, taxResult, taxNoBonus, bonusMarginalTax, effectiveRate,
+    monthlyTax, monthlyCash, monthlyAsset, monthlyPensionAccount,
+    annualCash, annualAsset, annualPensionAccount,
+    countdown: getCountdown(now),
+    nextHoliday: getNextHoliday(now),
+    status: getStatus(now, today, startDate),
+  };
+}
+
+/* ============ 17. Render ============ */
+function render() {
+  const r = compute();
+  const todayKey = ymd(startOfDay(r.now));
+
+  $('status').className = 'chip ' + r.status.cls;
+  $('status').textContent = r.status.text;
+  $('countdown').innerHTML = r.countdown.icon + ' ' + r.countdown.label
+    + ' <strong>' + formatDuration(r.countdown.ms) + '</strong>';
+  if (r.nextHoliday) {
+    $('holidayCd').innerHTML = t('holiday.next', {
+      name: `<strong>${r.nextHoliday.name || ''}</strong>`,
+      date: r.nextHoliday.date,
+      days: `<strong>${r.nextHoliday.days}</strong>`,
+    });
+  } else {
+    $('holidayCd').textContent = t('holiday.none');
+  }
+
+  $('todaySalary').textContent = fmtMoney(r.todayLive.earned);
+  $('todaySalarySub').textContent = t('card.todaySalarySub', {
+    daily: fmtMoney(r.dailyRate),
+    progress: (r.todayLive.progress * 100).toFixed(1),
+  });
+  $('todayBar').style.width = (r.todayLive.progress * 100).toFixed(2) + '%';
+
+  const stockCls = r.todayStock > 0 ? 'pos' : (r.todayStock < 0 ? 'neg' : '');
+  $('todayStock').className = 'amount ' + stockCls;
+  $('todayStock').textContent = fmtSigned(r.todayStock);
+
+  $('todayTotal').textContent = fmtMoney(r.todayTotal);
+  $('todayTotal').className = 'amount big ' + (r.todayTotal > 0 ? 'pos' : (r.todayTotal < 0 ? 'neg' : ''));
+  $('todayTotalSub').textContent = t('card.todayTotalSub', {
+    salary: fmtMoney(r.todayLive.earned), side: fmtSigned(r.todayStock),
+  });
+
+  $('monthTotal').textContent = fmtMoney(r.monthTotal);
+  $('monthSub').textContent = t('card.monthSub', {
+    salary: fmtMoney(r.monthSalary), side: fmtSigned(r.monthStock),
+    pct: (r.monthProgress * 100).toFixed(1),
+  });
+  $('monthBar').style.width = (r.monthProgress * 100).toFixed(2) + '%';
+
+  $('grandTotal').textContent = fmtMoney(r.grandTotal);
+  $('grandSub').textContent = t('card.grandSub', {
+    salary: fmtMoney(r.grandSalary), side: fmtSigned(r.grandStock),
+    days: r.workedDays.toFixed(2),
+  });
+
+  $('goalAmount').textContent = fmtMoney(r.yearTotal) + ' / ' + fmtMoney(r.goal);
+  $('goalBar').style.width = (r.goalProgress * 100).toFixed(2) + '%';
+  let goalEta;
+  if (r.goal <= 0) goalEta = t('card.goalEtaNoGoal');
+  else {
+    const remain = r.goal - r.yearTotal;
+    if (remain <= 0) goalEta = t('card.goalEtaDone');
+    else if (r.dailyRate > 0) goalEta = t('card.goalEtaRemain', {
+      remain: fmtMoney(remain), days: (remain / r.dailyRate).toFixed(1),
+    });
+    else goalEta = '—';
+  }
+  $('goalSub').textContent = t('card.goalSub', {
+    pct: (r.goalProgress * 100).toFixed(1), eta: goalEta,
+  });
+
+  $('hourly').textContent = fmtMoney(r.hourlyRate);
+  $('daily').textContent = fmtMoney(r.dailyRate);
+  $('perSec').textContent = fmtMoney(r.perSecRate, 4);
+
+  $('monthAsset').textContent = fmtMoney(r.monthlyAsset);
+  $('monthAssetSub').textContent = t('card.monthAssetSub', {
+    cash: fmtMoney(r.monthlyCash), pension: fmtMoney(r.monthlyPensionAccount),
+  });
+
+  const bonusAsset = r.bonus + (r.pension.bonusPortion || 0) * 2 - r.bonusMarginalTax;
+  $('bonusNet').textContent = fmtMoney(bonusAsset);
+  $('bonusNetSub').textContent = r.bonus > 0
+    ? t('card.bonusNetSub', {
+        months: (STATE.config.bonusMonths || 0),
+        bonus: fmtMoney(r.bonus),
+        tax: fmtMoney(r.bonusMarginalTax),
+      })
+    : t('card.bonusNotSet');
+
+  $('annualAsset').textContent = fmtMoney(r.annualAsset);
+  $('annualAssetSub').textContent = t('card.annualAssetSub', {
+    cash: fmtMoney(r.annualCash),
+    pension: fmtMoney(r.annualPensionAccount),
+    rate: (r.effectiveRate * 100).toFixed(2),
+  });
+
+  $('mGross').textContent = fmtMoney(r.salary);
+  $('mMpf').textContent = fmtMoney(r.pension.employeeMonthly);
+  $('mTaxMonthly').textContent = fmtMoney(r.monthlyTax);
+  $('mNet').textContent = fmtMoney(r.monthlyAsset);
+
+  const todayRec = STATE.daily[todayKey] || {};
+  if (document.activeElement !== $('todayStockInput')) {
+    $('todayStockInput').value = todayRec.stock != null ? todayRec.stock : '';
+  }
+  if (document.activeElement !== $('todayStockNote')) {
+    $('todayStockNote').value = todayRec.note || '';
+  }
+}
+
+/* ============ 18. History table ============ */
+function renderHistory() {
+  const cfg = STATE.config;
+  const startDate = parseDate(cfg.startDate);
+  const today = startOfDay(new Date());
+  const rows = [];
+  if (startDate && today >= startDate) {
+    const cur = new Date(today);
+    while (cur >= startDate) { rows.push(new Date(cur)); cur.setDate(cur.getDate() - 1); }
+  }
+  const body = $('histBody'); body.innerHTML = '';
+  let sumSalary = 0, sumStock = 0;
+  const r = compute();
+  const weekdays = t('weekdays');
+
+  rows.forEach(d => {
+    const key = ymd(d);
+    const isToday = key === ymd(today);
+    const rec = STATE.daily[key] || {};
+    const stock = Number(rec.stock) || 0;
+    const note = rec.note || '';
+    const type = rec.type || 'normal';
+    const effective = isEffectiveWorkDay(d);
+    let salary = 0;
+    if (effective) {
+      if (isToday) salary = r.todayLive.earned;
+      else salary = getDailyRate(d.getFullYear(), d.getMonth());
+    }
+    sumSalary += salary; sumStock += stock;
+
+    let dateCls = '';
+    if (d.getDay() === 0 || d.getDay() === 6) dateCls = 'weekend';
+    const hname = holidayName(key);
+    if (hname) dateCls = 'holiday';
+    const dateLabel = key + (hname ? ` · ${hname}` : '');
+    const total = salary + stock;
+
+    const tr = document.createElement('tr');
+    if (isToday) tr.classList.add('today');
+    tr.innerHTML = `
+      <td class="${dateCls}">${dateLabel}${isToday ? ' · ' + t('hist.today') : ''}</td>
+      <td class="${dateCls}">${weekdays[d.getDay()]}</td>
+      <td class="num">${fmtMoney(salary)}</td>
+      <td class="num"><input class="cell stock" data-date="${key}" type="number" step="0.01" value="${rec.stock != null ? rec.stock : ''}" placeholder="0" /></td>
+      <td><input class="cell note" data-date="${key}" type="text" value="${escapeHtml(note)}" placeholder="${escapeAttr(t('card.notePlaceholder'))}" /></td>
+      <td>
+        <select class="cell type" data-date="${key}">
+          <option value="normal" ${type==='normal'?'selected':''}>${t('hist.type.normal')}</option>
+          <option value="leave"  ${type==='leave' ?'selected':''}>${t('hist.type.leave')}</option>
+          <option value="extra"  ${type==='extra' ?'selected':''}>${t('hist.type.extra')}</option>
+        </select>
+      </td>
+      <td class="num ${total>0?'pos':(total<0?'neg':'')}">${fmtSigned(total)}</td>`;
+    body.appendChild(tr);
+  });
+
+  $('histSummary').textContent = t('hist.summary', {
+    count: rows.length,
+    salary: fmtMoney(sumSalary),
+    side: fmtSigned(sumStock),
+    total: fmtSigned(sumSalary + sumStock),
+  });
+
+  body.querySelectorAll('input.stock').forEach(el => {
+    el.addEventListener('change', onStockEdit);
+    el.addEventListener('blur', onStockEdit);
+  });
+  body.querySelectorAll('input.note').forEach(el => {
+    el.addEventListener('change', onNoteEdit);
+    el.addEventListener('blur', onNoteEdit);
+  });
+  body.querySelectorAll('select.type').forEach(el => el.addEventListener('change', onTypeEdit));
+}
+function ensureRec(key) {
+  if (!STATE.daily[key]) STATE.daily[key] = { stock: 0, note: '', type: 'normal' };
+  return STATE.daily[key];
+}
+function onStockEdit(e) {
+  const key = e.target.dataset.date;
+  ensureRec(key).stock = e.target.value === '' ? 0 : Number(e.target.value);
+  saveState(); renderAll();
+}
+function onNoteEdit(e) {
+  ensureRec(e.target.dataset.date).note = e.target.value; saveState();
+}
+function onTypeEdit(e) {
+  ensureRec(e.target.dataset.date).type = e.target.value; saveState(); renderAll();
+}
+
+/* ============ 19. Chart ============ */
+function renderChart() {
+  const svg = $('chart');
+  const W = 800, H = 240, PAD_L = 70, PAD_R = 16, PAD_T = 12, PAD_B = 28;
+  const cfg = STATE.config;
+  const startDate = parseDate(cfg.startDate);
+  const today = startOfDay(new Date());
+  const dates = [];
+  if (startDate && today >= startDate) {
+    const cur = new Date(startDate);
+    while (cur <= today) { dates.push(new Date(cur)); cur.setDate(cur.getDate() + 1); }
+  }
+  const r = compute();
+  let accS = 0, accStk = 0;
+  const points = dates.map(d => {
+    const key = ymd(d);
+    const isToday = key === ymd(today);
+    const effective = isEffectiveWorkDay(d);
+    let s = 0;
+    if (effective) s = isToday ? r.todayLive.earned : getDailyRate(d.getFullYear(), d.getMonth());
+    const stk = Number((STATE.daily[key] || {}).stock) || 0;
+    accS += s; accStk += stk;
+    return { d, salary: accS, stock: accStk, total: accS + accStk };
+  });
+  if (!points.length) {
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" fill="var(--muted)" text-anchor="middle" style="font-size:13px">${t('chart.empty')}</text>`;
+    return;
+  }
+  const yVals = points.flatMap(p => [p.salary, p.stock, p.total, 0]);
+  const yMin = Math.min(...yVals), yMax = Math.max(...yVals);
+  const yRange = (yMax - yMin) || 1;
+  const yLo = yMin - yRange * 0.08, yHi = yMax + yRange * 0.08;
+  const xOf = (i) => PAD_L + (W - PAD_L - PAD_R) * (points.length === 1 ? 0.5 : i / (points.length - 1));
+  const yOf = (v) => PAD_T + (H - PAD_T - PAD_B) * (1 - (v - yLo) / (yHi - yLo));
+  const path = (key, color) => `<path d="${points.map((p, i) => (i === 0 ? 'M' : 'L') + xOf(i).toFixed(1) + ',' + yOf(p[key]).toFixed(1)).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`;
+  const grid = [];
+  for (let i = 0; i <= 4; i++) {
+    const v = yLo + (yHi - yLo) * i / 4; const y = yOf(v).toFixed(1);
+    grid.push(`<line x1="${PAD_L}" x2="${W-PAD_R}" y1="${y}" y2="${y}" stroke="currentColor" stroke-opacity="0.08" />`);
+    grid.push(`<text x="${PAD_L-6}" y="${Number(y)+4}" fill="currentColor" fill-opacity="0.5" text-anchor="end" style="font-size:11px">${fmtMoney(v, 0)}</text>`);
+  }
+  const xTicks = [];
+  const tc = Math.min(6, points.length);
+  for (let i = 0; i < tc; i++) {
+    const idx = Math.round((points.length - 1) * i / (tc - 1 || 1));
+    const d = points[idx].d;
+    xTicks.push(`<text x="${xOf(idx).toFixed(1)}" y="${H-8}" fill="currentColor" fill-opacity="0.5" text-anchor="middle" style="font-size:11px">${pad(d.getMonth()+1)}-${pad(d.getDate())}</text>`);
+  }
+  const zero = (yLo < 0 && yHi > 0) ? `<line x1="${PAD_L}" x2="${W-PAD_R}" y1="${yOf(0)}" y2="${yOf(0)}" stroke="currentColor" stroke-opacity="0.25" stroke-dasharray="3,3" />` : '';
+  svg.innerHTML = `<g style="color:var(--text)">${grid.join('')}${zero}${xTicks.join('')}${path('salary','#ffd700')}${path('stock','#64b5f6')}${path('total','#f48fb1')}</g>`;
+}
+
+/* ============ 20. Tax breakdown ============ */
+function renderTaxPanel() {
+  const panel = $('taxConfigPanel');
+  const prov = TAX_PROVIDERS[STATE.config.taxProvider] || TAX_PROVIDERS.none;
+  if (!panel) return;
+  if (!prov.renderConfig) { panel.innerHTML = ''; return; }
+  panel.innerHTML = prov.renderConfig(STATE.config.taxConfig || {}, t);
+  panel.querySelectorAll('input,select').forEach(el => {
+    el.addEventListener('change', () => {
+      STATE.config.taxConfig = { ...(STATE.config.taxConfig || {}), ...prov.readConfig() };
+      saveState(); renderAll();
+    });
+  });
+}
+function renderPensionPanel() {
+  const panel = $('pensionConfigPanel');
+  if (!panel) return;
+  const prov = PENSION_PROVIDERS[STATE.config.pensionProvider] || PENSION_PROVIDERS.none;
+  if (!prov.renderConfig) { panel.innerHTML = ''; return; }
+  panel.innerHTML = prov.renderConfig(STATE.config.pensionConfig || {}, t);
+  panel.querySelectorAll('input,select').forEach(el => {
+    el.addEventListener('change', () => {
+      STATE.config.pensionConfig = { ...(STATE.config.pensionConfig || {}), ...prov.readConfig() };
+      saveState(); renderAll();
+    });
+  });
+}
+function renderTaxBreakdown() {
+  const r = compute();
+  const body = $('taxBreakdown');
+  if (!body) return;
+  const prov = TAX_PROVIDERS[STATE.config.taxProvider] || TAX_PROVIDERS.none;
+  if (prov.id === 'none') { body.innerHTML = `<tr><td style="color:var(--muted)">${t('tax.noneHint')}</td></tr>`; $('taxHint').innerHTML = ''; return; }
+
+  const row = (label, value, cls, bold) => {
+    const val = typeof value === 'number' ? fmtMoney(value) : value;
+    return `<tr ${bold ? 'style="background:rgba(255,215,0,0.08)"' : ''}><td>${bold ? '<b>' + label + '</b>' : label}</td><td class="num ${cls||''}">${bold ? '<b>' + val + '</b>' : val}</td></tr>`;
+  };
+  let html = '';
+  if (r.bonus > 0) {
+    html += row('  ' + t('tax.rowGross12'), r.baseIncome);
+    html += row('  ' + t('tax.rowBonus', { months: STATE.config.bonusMonths }), r.bonus);
+  }
+  (r.taxResult.breakdown || []).forEach(b => {
+    html += row(b.label, b.amount, b.cls, b.bold);
+  });
+  html += row(t('tax.rowEffective'), (r.effectiveRate * 100).toFixed(2) + ' %');
+
+  // Pension info
+  html += `<tr><td colspan="2" style="padding-top:14px;color:var(--muted);font-size:12px">${t('stat.pension')}</td></tr>`;
+  html += row('  ' + t('tax.pensionEmployee'), r.pension.employeeMonthly);
+  html += row('  ' + t('tax.pensionEmployer'), r.pension.employerMonthly);
+  html += row('  ' + t('tax.pensionAnnual'), r.pension.annual);
+
+  // Cash vs asset
+  html += `<tr><td colspan="2" style="padding-top:14px;color:var(--muted);font-size:12px">${t('tax.cashRow')}</td></tr>`;
+  html += row(t('tax.monthlyCash'), r.monthlyCash);
+  html += row(t('tax.annualCash'), r.annualCash);
+  html += `<tr><td colspan="2" style="padding-top:14px;color:var(--muted);font-size:12px">${t('tax.assetRow')}</td></tr>`;
+  html += row(t('tax.monthlyAsset'), r.monthlyAsset, 'pos', true);
+  html += row(t('tax.annualAsset'), r.annualAsset, 'pos', true);
+
+  // TVC what-if (only for hk tax)
+  if (prov.id === 'hk-salaries-tax') html += renderTVCTable(r);
+
+  body.innerHTML = html;
+  $('taxHint').innerHTML = t('tax.hint');
+}
+function renderTVCTable(r) {
+  const cfg = STATE.config.taxConfig || {};
+  const currentTVC = Number(cfg.tvc) || 0;
+  const levels = [0, 10000, 20000, 30000, 40000, 50000, 60000];
+  // Recompute tax with varying tvc
+  const prov = TAX_PROVIDERS['hk-salaries-tax'];
+  const taxAt = (tvcAmt) => {
+    const mergedCfg = { ...cfg, tvc: tvcAmt };
+    const res = prov.compute(r.grossAnnual, {
+      config: mergedCfg, t, pension: r.pension, bonus: r.bonus, baseIncome: r.baseIncome,
+    });
+    return res.tax;
+  };
+  const tax0 = taxAt(0);
+  let html = `<tr><td colspan="2" style="padding-top:14px;color:var(--muted);font-size:12px">${t('tvc.title')}</td></tr>`;
+  html += `<tr><td colspan="2" style="padding:4px 0"><table class="records" style="margin:0"><thead><tr>
+    <th class="num">${t('tvc.col.contribution')}</th>
+    <th class="num">${t('tvc.col.saved')}</th>
+    <th class="num">${t('tvc.col.yield')}</th>
+  </tr></thead><tbody>`;
+  for (const lvl of levels) {
+    const saved = tax0 - taxAt(lvl);
+    const yieldRate = lvl > 0 ? (saved / lvl * 100).toFixed(2) + ' %' : '—';
+    const isCur = lvl === currentTVC;
+    const style = isCur ? 'style="background:rgba(255,215,0,0.15);font-weight:600"' : '';
+    html += `<tr ${style}><td class="num">${fmtMoney(lvl, 0)}${isCur ? ' ' + t('tvc.current') : ''}</td><td class="num pos">${fmtMoney(saved)}</td><td class="num pos">${yieldRate}</td></tr>`;
+  }
+  html += `</tbody></table></td></tr>`;
+  const marginal = (tax0 - taxAt(10000)) / 10000;
+  html += `<tr><td colspan="2" style="padding:8px 0;color:var(--muted);font-size:12px;line-height:1.7">${t('tvc.hint', { rate: (marginal*100).toFixed(1), saved: fmtMoney(marginal) })}</td></tr>`;
+  return html;
+}
+
+// extra tax-breakdown keys
+const TAX_EXTRA_I18N = {
+  'en': {
+    'tax.pensionEmployee': 'Employee contribution / mo',
+    'tax.pensionEmployer': 'Employer contribution / mo',
+    'tax.pensionAnnual': 'Annual total',
+    'tax.cashRow': '💰 Cash in hand',
+    'tax.assetRow': '💎 Asset growth (incl. employer pension)',
+    'tax.monthlyCash': 'Monthly cash',
+    'tax.annualCash': 'Annual cash',
+    'tax.monthlyAsset': 'Monthly asset growth',
+    'tax.annualAsset': 'Annual asset growth',
+  },
+  'zh-CN': {
+    'tax.pensionEmployee': '雇员月供款',
+    'tax.pensionEmployer': '雇主月供款',
+    'tax.pensionAnnual': '年度合计',
+    'tax.cashRow': '💰 现金到手',
+    'tax.assetRow': '💎 资产增值（含雇主退休金）',
+    'tax.monthlyCash': '每月现金',
+    'tax.annualCash': '全年现金',
+    'tax.monthlyAsset': '每月资产增值',
+    'tax.annualAsset': '全年资产增值',
+  },
+  'zh-HK': {
+    'tax.pensionEmployee': '僱員月供款',
+    'tax.pensionEmployer': '僱主月供款',
+    'tax.pensionAnnual': '年度合計',
+    'tax.cashRow': '💰 現金到手',
+    'tax.assetRow': '💎 資產增值（含僱主退休金）',
+    'tax.monthlyCash': '每月現金',
+    'tax.annualCash': '全年現金',
+    'tax.monthlyAsset': '每月資產增值',
+    'tax.annualAsset': '全年資產增值',
+  },
+};
+for (const loc in TAX_EXTRA_I18N) Object.assign(I18N[loc], TAX_EXTRA_I18N[loc]);
+
+/* ============ 21. Global refresh ============ */
+function renderAll() {
+  render(); renderChart(); renderHistory(); renderTaxBreakdown();
+}
+
+/* ============ 22. Settings form ============ */
+function populateSelectors() {
+  const langSel = $('langSel'); langSel.innerHTML = '';
+  for (const [code, v] of Object.entries(I18N)) {
+    const o = document.createElement('option'); o.value = code;
+    o.textContent = (v._flag ? v._flag + ' ' : '') + v._name;
+    langSel.appendChild(o);
+  }
+  langSel.value = STATE.config.locale;
+
+  const curSel = $('currencySel'); curSel.innerHTML = '';
+  for (const [code, v] of Object.entries(CURRENCIES)) {
+    const o = document.createElement('option'); o.value = code;
+    o.textContent = v.symbol + ' ' + code;
+    curSel.appendChild(o);
+  }
+  curSel.value = STATE.config.currency;
+
+  const regSel = $('regionSel'); regSel.innerHTML = '';
+  for (const [code, v] of Object.entries(REGIONS)) {
+    const o = document.createElement('option'); o.value = code;
+    o.textContent = v.name[STATE.config.locale] || v.name['en'];
+    regSel.appendChild(o);
+  }
+  regSel.value = STATE.config.region;
+
+  const tSel = $('taxProviderSel'); tSel.innerHTML = '';
+  for (const [code, v] of Object.entries(TAX_PROVIDERS)) {
+    const o = document.createElement('option'); o.value = code;
+    o.textContent = v.name[STATE.config.locale] || v.name['en'];
+    tSel.appendChild(o);
+  }
+  tSel.value = STATE.config.taxProvider;
+
+  const pSel = $('pensionProviderSel'); pSel.innerHTML = '';
+  for (const [code, v] of Object.entries(PENSION_PROVIDERS)) {
+    const o = document.createElement('option'); o.value = code;
+    o.textContent = v.name[STATE.config.locale] || v.name['en'];
+    pSel.appendChild(o);
+  }
+  pSel.value = STATE.config.pensionProvider;
+}
+function applyConfigToForm() {
+  const c = STATE.config;
+  $('salary').value = c.salary || 0;
+  $('bonusMonths').value = c.bonusMonths || 0;
+  $('startDate').value = c.startDate || '';
+  $('workStart').value = c.workStart; $('workEnd').value = c.workEnd;
+  $('lunchStart').value = c.lunchStart; $('lunchEnd').value = c.lunchEnd;
+  $('yearlyGoal').value = c.yearlyGoal || 0;
+  $('fxRate').value = c.fxRate; $('decimals').value = c.decimals;
+}
+function readConfigFromForm() {
+  return {
+    salary: Number($('salary').value) || 0,
+    bonusMonths: Number($('bonusMonths').value) || 0,
+    startDate: $('startDate').value || '',
+    workStart: $('workStart').value || '09:00',
+    workEnd: $('workEnd').value || '18:00',
+    lunchStart: $('lunchStart').value || '12:00',
+    lunchEnd: $('lunchEnd').value || '13:00',
+    yearlyGoal: Number($('yearlyGoal').value) || 0,
+    fxRate: Number($('fxRate').value) || 1,
+    decimals: Number($('decimals').value),
+  };
+}
+
+/* ============ 23. Onboarding wizard ============ */
+let WIZARD_STATE = 0; // 0..4
+let WIZARD_TMP = {};
+function showWizard() {
+  WIZARD_STATE = 0;
+  WIZARD_TMP = { ...STATE.config };
+  $('wizard').classList.remove('hidden');
+  renderWizardStep();
+}
+function hideWizard() { $('wizard').classList.add('hidden'); }
+function renderWizardStep() {
+  const dots = $('wizard').querySelectorAll('.wizard-progress .dot');
+  dots.forEach((d, i) => d.classList.toggle('active', i <= WIZARD_STATE));
+  const step = $('wizardStep');
+  const back = $('wizardBack'), next = $('wizardNext');
+  back.style.visibility = WIZARD_STATE === 0 ? 'hidden' : 'visible';
+  back.textContent = t('wizard.back');
+  next.textContent = WIZARD_STATE === 4 ? t('wizard.finish') : t('wizard.next');
+
+  if (WIZARD_STATE === 0) {
+    step.innerHTML = `
+      <h2>${t('wizard.title1')}</h2>
+      <div class="step-desc">${t('wizard.desc1')}</div>
+      <div class="step-content">
+        <div style="font-size:14px;margin-bottom:12px;color:var(--muted)">Choose language / 选择语言 / 揀語言</div>
+        <div class="choices" id="wizLang">
+          ${Object.entries(I18N).map(([c, v]) => `<button class="choice ${c === WIZARD_TMP.locale ? 'active' : ''}" data-val="${c}"><div class="big-label">${v._flag} ${v._name}</div></button>`).join('')}
+        </div>
+      </div>`;
+    step.querySelectorAll('#wizLang .choice').forEach(b => b.addEventListener('click', () => {
+      WIZARD_TMP.locale = b.dataset.val;
+      STATE.config.locale = b.dataset.val;
+      applyI18n();
+      renderWizardStep();
+    }));
+  } else if (WIZARD_STATE === 1) {
+    step.innerHTML = `
+      <h2>${t('wizard.title2')}</h2>
+      <div class="step-desc">${t('wizard.desc2')}</div>
+      <div class="step-content">
+        <div class="choices" id="wizRegion">
+          ${Object.entries(REGIONS).map(([c, v]) => `<button class="choice ${c === WIZARD_TMP.region ? 'active' : ''}" data-val="${c}"><div class="big-label">${v.name[WIZARD_TMP.locale] || v.name.en}</div><div class="big-sub">${v.currency}</div></button>`).join('')}
+        </div>
+      </div>`;
+    step.querySelectorAll('#wizRegion .choice').forEach(b => b.addEventListener('click', () => {
+      const code = b.dataset.val;
+      WIZARD_TMP.region = code;
+      const reg = REGIONS[code];
+      WIZARD_TMP.currency = reg.currency;
+      WIZARD_TMP.fxRate = reg.fxRate;
+      WIZARD_TMP.taxProvider = reg.tax;
+      WIZARD_TMP.pensionProvider = reg.pension;
+      if (reg.overrides) {
+        if (reg.overrides.taxConfig) WIZARD_TMP.taxConfig = { ...reg.overrides.taxConfig };
+        if (reg.overrides.pensionConfig) WIZARD_TMP.pensionConfig = { ...reg.overrides.pensionConfig };
+      } else {
+        WIZARD_TMP.taxConfig = { ...(TAX_PROVIDERS[reg.tax].defaultConfig || {}) };
+        WIZARD_TMP.pensionConfig = { ...(PENSION_PROVIDERS[reg.pension].defaultConfig || {}) };
+      }
+      renderWizardStep();
+    }));
+  } else if (WIZARD_STATE === 2) {
+    step.innerHTML = `
+      <h2>${t('wizard.title3')}</h2>
+      <div class="step-desc">${t('wizard.desc3')} (${CURRENCIES[WIZARD_TMP.currency].symbol})</div>
+      <div class="step-content">
+        <div class="row">
+          <div><label>${t('wizard.salary.label')}</label><input id="wizSalary" type="number" min="0" step="100" value="${WIZARD_TMP.salary || ''}" /></div>
+          <div><label>${t('wizard.bonus.label')}</label><input id="wizBonus" type="number" min="0" step="0.5" value="${WIZARD_TMP.bonusMonths || 0}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('wizard.startDate.label')}</label><input id="wizStart" type="date" value="${WIZARD_TMP.startDate || ''}" /></div>
+          <div><label>${t('wizard.goal.label')}</label><input id="wizGoal" type="number" min="0" step="10000" value="${WIZARD_TMP.yearlyGoal || 0}" /></div>
+        </div>
+      </div>`;
+  } else if (WIZARD_STATE === 3) {
+    step.innerHTML = `
+      <h2>${t('wizard.title4')}</h2>
+      <div class="step-desc">${t('wizard.desc4')}</div>
+      <div class="step-content">
+        <div class="row">
+          <div><label>${t('settings.workStart')}</label><input id="wizWs" type="time" value="${WIZARD_TMP.workStart}" /></div>
+          <div><label>${t('settings.workEnd')}</label><input id="wizWe" type="time" value="${WIZARD_TMP.workEnd}" /></div>
+        </div>
+        <div class="row">
+          <div><label>${t('settings.lunchStart')}</label><input id="wizLs" type="time" value="${WIZARD_TMP.lunchStart}" /></div>
+          <div><label>${t('settings.lunchEnd')}</label><input id="wizLe" type="time" value="${WIZARD_TMP.lunchEnd}" /></div>
+        </div>
+      </div>`;
+  } else if (WIZARD_STATE === 4) {
+    const cur = CURRENCIES[WIZARD_TMP.currency];
+    const fmt = (v) => cur.symbol + ' ' + (Number(v) || 0).toLocaleString('en-US', { minimumFractionDigits: cur.decimals, maximumFractionDigits: cur.decimals });
+    const reg = REGIONS[WIZARD_TMP.region];
+    step.innerHTML = `
+      <h2>${t('wizard.title5')}</h2>
+      <div class="step-desc">${t('wizard.desc5')}</div>
+      <div class="step-content">
+        <div style="background:var(--card);border:1px solid var(--card-border);border-radius:12px;padding:16px;font-size:14px;line-height:2">
+          <div>📍 ${reg.name[WIZARD_TMP.locale] || reg.name.en}</div>
+          <div>💰 ${fmt(WIZARD_TMP.salary)} × 12 ${WIZARD_TMP.bonusMonths > 0 ? `+ ${WIZARD_TMP.bonusMonths} months bonus` : ''}</div>
+          <div>⏰ ${WIZARD_TMP.workStart} – ${WIZARD_TMP.workEnd} (lunch ${WIZARD_TMP.lunchStart}–${WIZARD_TMP.lunchEnd})</div>
+          <div>📅 ${WIZARD_TMP.startDate || '(no start date)'}</div>
+          <div>🏛️ Tax: ${(TAX_PROVIDERS[WIZARD_TMP.taxProvider].name[WIZARD_TMP.locale] || TAX_PROVIDERS[WIZARD_TMP.taxProvider].name.en)}</div>
+          <div>🏦 Pension: ${(PENSION_PROVIDERS[WIZARD_TMP.pensionProvider].name[WIZARD_TMP.locale] || PENSION_PROVIDERS[WIZARD_TMP.pensionProvider].name.en)}</div>
+        </div>
+      </div>`;
+  }
+}
+function readCurrentWizardStep() {
+  if (WIZARD_STATE === 2) {
+    WIZARD_TMP.salary = Number($('wizSalary').value) || 0;
+    WIZARD_TMP.bonusMonths = Number($('wizBonus').value) || 0;
+    WIZARD_TMP.startDate = $('wizStart').value || '';
+    WIZARD_TMP.yearlyGoal = Number($('wizGoal').value) || 0;
+  } else if (WIZARD_STATE === 3) {
+    WIZARD_TMP.workStart = $('wizWs').value || '09:00';
+    WIZARD_TMP.workEnd = $('wizWe').value || '18:00';
+    WIZARD_TMP.lunchStart = $('wizLs').value || '12:00';
+    WIZARD_TMP.lunchEnd = $('wizLe').value || '13:00';
+  }
+}
+function finishWizard() {
+  readCurrentWizardStep();
+  WIZARD_TMP.wizardDone = true;
+  STATE.config = { ...STATE.config, ...WIZARD_TMP };
+  saveState();
+  applyI18n(); populateSelectors(); applyConfigToForm(); renderTaxPanel(); renderPensionPanel();
+  hideWizard(); renderAll();
+}
+
+/* ============ 24. Events ============ */
+document.addEventListener('DOMContentLoaded', () => {
+  populateSelectors(); applyI18n(); applyConfigToForm(); renderTaxPanel(); renderPensionPanel();
+  applyTheme();
+
+  $('langSel').addEventListener('change', (e) => {
+    STATE.config.locale = e.target.value; saveState();
+    applyI18n(); populateSelectors(); renderTaxPanel(); renderPensionPanel(); renderAll();
+  });
+  $('currencySel').addEventListener('change', (e) => {
+    STATE.config.currency = e.target.value;
+    const cur = CURRENCIES[e.target.value];
+    STATE.config.decimals = cur.decimals;
+    saveState(); applyConfigToForm(); renderAll();
+  });
+  $('regionSel').addEventListener('change', (e) => {
+    const code = e.target.value;
+    const reg = REGIONS[code];
+    if (!confirm(t('settings.confirmRegionChange', { name: reg.name[STATE.config.locale] || reg.name.en }) || 'Apply region defaults (currency, tax, pension, holidays)?')) {
+      e.target.value = STATE.config.region; return;
+    }
+    STATE.config.region = code;
+    STATE.config.currency = reg.currency;
+    STATE.config.fxRate = reg.fxRate;
+    STATE.config.taxProvider = reg.tax;
+    STATE.config.pensionProvider = reg.pension;
+    if (reg.overrides) {
+      if (reg.overrides.taxConfig) STATE.config.taxConfig = { ...reg.overrides.taxConfig };
+      if (reg.overrides.pensionConfig) STATE.config.pensionConfig = { ...reg.overrides.pensionConfig };
+    } else {
+      STATE.config.taxConfig = { ...(TAX_PROVIDERS[reg.tax].defaultConfig || {}) };
+      STATE.config.pensionConfig = { ...(PENSION_PROVIDERS[reg.pension].defaultConfig || {}) };
+    }
+    saveState(); populateSelectors(); applyConfigToForm(); renderTaxPanel(); renderPensionPanel(); renderAll();
+  });
+  $('taxProviderSel').addEventListener('change', (e) => {
+    STATE.config.taxProvider = e.target.value;
+    STATE.config.taxConfig = { ...(TAX_PROVIDERS[e.target.value].defaultConfig || {}) };
+    saveState(); renderTaxPanel(); renderPensionPanel(); renderAll();
+  });
+  $('pensionProviderSel').addEventListener('change', (e) => {
+    STATE.config.pensionProvider = e.target.value;
+    STATE.config.pensionConfig = { ...(PENSION_PROVIDERS[e.target.value].defaultConfig || {}) };
+    saveState(); renderPensionPanel(); renderAll();
+  });
+
+  $('saveBtn').addEventListener('click', () => {
+    Object.assign(STATE.config, readConfigFromForm()); saveState(); renderAll();
+    flashBtn($('saveBtn'), t('settings.saved'));
+  });
+  $('resetBtn').addEventListener('click', () => {
+    if (!confirm(t('settings.confirmReset'))) return;
+    const keep = { theme: STATE.config.theme, locale: STATE.config.locale, wizardDone: true };
+    STATE.config = { ...DEFAULTS, ...keep };
+    saveState(); populateSelectors(); applyConfigToForm(); renderTaxPanel(); renderPensionPanel(); renderAll();
+  });
+  $('clearBtn').addEventListener('click', () => {
+    if (!confirm(t('settings.confirmClear'))) return;
+    STATE.daily = {}; saveState(); renderAll();
+  });
+  $('rerunWizardBtn').addEventListener('click', showWizard);
+
+  $('todayStockInput').addEventListener('change', onTodayStockChange);
+  $('todayStockInput').addEventListener('blur', onTodayStockChange);
+  $('todayStockNote').addEventListener('change', onTodayStockChange);
+  $('todayStockNote').addEventListener('blur', onTodayStockChange);
+
+  $('exportBtn').addEventListener('click', () => {
+    const currencyMeta = CURRENCIES[STATE.config.currency] || {};
+    const map = currentHolidayMap();
+    const holidays = [], makeupWorkdays = [];
+    for (const d of Object.keys(map).sort()) {
+      if (map[d] && map[d].type === 'workday') makeupWorkdays.push(d);
+      else holidays.push(d);
+    }
+    const exportPayload = {
+      ...STATE,
+      config: {
+        ...STATE.config,
+        currencySymbol: currencyMeta.symbol || STATE.config.currency,
+        holidays,
+        makeupWorkdays,
+      },
+    };
+    const data = JSON.stringify(exportPayload, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `paypulse-backup-${ymd(new Date())}.json`;
+    a.click(); URL.revokeObjectURL(url);
+  });
+  $('importBtn').addEventListener('click', () => $('importFile').click());
+  $('importFile').addEventListener('change', (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data.config && !data.daily) throw new Error(t('settings.importBadFormat'));
+        if (!confirm(t('settings.confirmImport'))) return;
+        STATE = { config: { ...DEFAULTS, ...(data.config || {}) }, daily: data.daily || {} };
+        saveState(); populateSelectors(); applyConfigToForm(); applyI18n(); applyTheme(); renderTaxPanel(); renderPensionPanel(); renderAll();
+        alert(t('settings.importOk'));
+      } catch (err) {
+        alert(t('settings.importFail', { err: err.message }));
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.querySelectorAll('.toggle').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.toggle; if ($(id)) $(id).classList.toggle('collapsed');
+    });
+  });
+
+  $('themeToggle').addEventListener('click', () => {
+    STATE.config.theme = STATE.config.theme === 'light' ? 'dark' : 'light';
+    saveState(); applyTheme();
+  });
+
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+  });
+
+  $('wizardNext').addEventListener('click', () => {
+    readCurrentWizardStep();
+    if (WIZARD_STATE < 4) { WIZARD_STATE++; renderWizardStep(); }
+    else finishWizard();
+  });
+  $('wizardBack').addEventListener('click', () => {
+    if (WIZARD_STATE > 0) { WIZARD_STATE--; renderWizardStep(); }
+  });
+  $('wizardSkip').addEventListener('click', () => {
+    STATE.config.wizardDone = true; saveState(); hideWizard();
+  });
+
+  // If first run, show wizard
+  if (!STATE.config.wizardDone) {
+    setTimeout(showWizard, 50);
+  }
+
+  switchTab(localStorage.getItem('paypulse_tab') || 'home');
+  renderAll();
+  setInterval(render, 100);
+  setInterval(renderChart, 60000);
+  let lastDay = ymd(new Date());
+  setInterval(() => {
+    const k = ymd(new Date());
+    if (k !== lastDay) { lastDay = k; renderAll(); }
+  }, 5000);
+});
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', STATE.config.theme || 'dark');
+  $('themeToggle').textContent = STATE.config.theme === 'light' ? '☀️' : '🌙';
+}
+function flashBtn(btn, text) {
+  const old = btn.innerHTML;
+  btn.innerHTML = text;
+  setTimeout(() => { btn.innerHTML = old; }, 1200);
+}
+function onTodayStockChange() {
+  const key = ymd(startOfDay(new Date()));
+  const rec = ensureRec(key);
+  rec.stock = $('todayStockInput').value === '' ? 0 : Number($('todayStockInput').value);
+  rec.note = $('todayStockNote').value;
+  saveState(); renderAll();
+}
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.getAttribute('data-tab') === tab));
+  document.querySelectorAll('[data-pages]').forEach(el => {
+    const pages = (el.getAttribute('data-pages') || '').split(/\s+/);
+    el.classList.toggle('tab-hidden', !pages.includes(tab));
+  });
+  try { localStorage.setItem('paypulse_tab', tab); } catch(_){}
+}
+</script>
+</body>
+</html>

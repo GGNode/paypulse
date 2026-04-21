@@ -1,0 +1,17 @@
+.DS_Store
+*.log
+.widget.log
+.widget_state.json
+earnings-config.json
+paypulse-config.json
+.venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+node_modules/
+.env
+*.swp
+*.swo
+*~
+Thumbs.db
