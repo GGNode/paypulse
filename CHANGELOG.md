@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   out of the box.
 - 2026 holiday data populated for HK, CN, US, UK, SG, JP (CN includes the
   full 调休 schedule from the State Council notice).
+- macOS desktop widget fullscreen handling is now Space-aware: it keeps hidden
+  during browser/video fullscreen even when Quartz temporarily misses the
+  fullscreen window, handles localized macOS system owners (e.g. `程序坞`), and
+  restores normal-window mode behind the active app instead of jumping to the
+  front.
 
 ## [1.0.0] — 2026-04-21
 

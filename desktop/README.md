@@ -73,7 +73,15 @@ Right-click the widget to get the menu:
 - **Reset to bottom-left**
 - **Quit widget**
 
-The widget hides itself automatically when any window goes fullscreen (e.g. video) and reappears when you exit.
+The widget hides itself automatically when any window goes fullscreen (e.g. video).
+In normal-window mode it restores to the back of the current Space after you
+exit fullscreen, so it stays available on "Show Desktop" without jumping in
+front of Cursor, Safari, or your active app.
+
+Under the hood, the widget combines fullscreen-window detection with macOS
+Space-change notifications. That matters because browsers such as Edge/Safari
+can intermittently disappear from Quartz's window list while a video is still
+fullscreen; PayPulse keeps the widget hidden until the Space actually changes.
 
 ### Menu bar app
 
@@ -110,6 +118,11 @@ Check `.widget.log` in this folder. Most common causes: `bash setup.sh` wasn't r
 
 **Clicks on the widget don't work.**
 You're probably in "Desktop-wallpaper layer" mode. Right-click and switch back to "Normal window".
+
+**Widget appears over fullscreen video.**
+Use the default "Normal window" mode first. If it still happens, open
+`.widget.log` and look for lines starting with `hide widget:` or `space
+changed:` — they show which fullscreen owner/window PayPulse detected.
 
 **Menu-bar icon is invisible.**
 macOS hides overflow menu-bar icons on small screens. Try `⌘-drag` to move other icons out of the way, or quit some menu-bar apps to make room.

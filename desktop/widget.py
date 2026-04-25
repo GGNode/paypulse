@@ -32,6 +32,7 @@ import os
 import sys
 import json
 import webbrowser
+from datetime import datetime
 
 try:
     import objc
@@ -101,48 +102,93 @@ def save_state(state):
 _FULLSCREEN_EXCLUDE = {
     "Window Server", "Dock", "SystemUIServer", "Control Center",
     "Notification Center", "Spotlight", "TextInputMenuAgent", "Finder",
+    # macOS localized owner names.
+    "程序坞", "系统用户界面服务器", "控制中心", "通知中心", "访达",
 }
 _MY_PID = os.getpid()
+_FULLSCREEN_EDGE_TOLERANCE = 12
+_FULLSCREEN_RESTORE_GRACE_SECONDS = 5.0
 
 
-def is_any_app_fullscreen():
-    """Return True if any foreground app window covers a full screen.
+def _log(message):
+    print(
+        f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}",
+        flush=True,
+    )
 
-    When a macOS app enters fullscreen it creates its own Space, and we
-    want the widget to hide in that Space (so it doesn't appear over
-    fullscreen videos, presentations, etc.).
+
+def _screen_rects():
+    rects = []
+    for screen in NSScreen.screens():
+        frame = screen.frame()
+        rects.append((
+            float(frame.origin.x),
+            float(frame.origin.y),
+            float(frame.size.width),
+            float(frame.size.height),
+        ))
+    return rects
+
+
+def _covers_screen(bounds, screen):
+    """Return True when a Quartz window bounds rect covers a full screen."""
+    sx, sy, sw, sh = screen
+    x = float(bounds.get("X", 0))
+    y = float(bounds.get("Y", 0))
+    w = float(bounds.get("Width", 0))
+    h = float(bounds.get("Height", 0))
+    tol = _FULLSCREEN_EDGE_TOLERANCE
+
+    if w < 200 or h < 200:
+        return False
+
+    return (
+        x <= sx + tol
+        and y <= sy + tol
+        and x + w >= sx + sw - tol
+        and y + h >= sy + sh - tol
+    )
+
+
+def find_fullscreen_window():
+    """Return the app window that looks fullscreen, or None.
+
+    Browser video fullscreen windows are not always reported consistently by
+    Quartz, and they are not guaranteed to be layer 0. The reliable signal is
+    a non-system, visible app-owned window covering an entire screen.
     """
     try:
         windows = CGWindowListCopyWindowInfo(
             kCGWindowListOptionOnScreenOnly, kCGNullWindowID
         )
     except Exception:
-        return False
+        return None
     if not windows:
-        return False
+        return None
 
-    screen_sizes = []
-    for s in NSScreen.screens():
-        f = s.frame()
-        screen_sizes.append((float(f.size.width), float(f.size.height)))
-
-    for w in windows:
-        if w.get("kCGWindowOwnerPID") == _MY_PID:
+    screens = _screen_rects()
+    for window in windows:
+        if window.get("kCGWindowOwnerPID") == _MY_PID:
             continue
-        owner = w.get("kCGWindowOwnerName", "") or ""
+        owner = window.get("kCGWindowOwnerName", "") or ""
         if owner in _FULLSCREEN_EXCLUDE:
             continue
-        if w.get("kCGWindowLayer", 0) != 0:
+        layer = int(window.get("kCGWindowLayer", 0) or 0)
+        # Dock, menu bar and system overlays may cover the screen in Quartz's
+        # list. Real app/video fullscreen surfaces live below those layers.
+        if layer < 0 or layer >= 20:
             continue
-        b = w.get("kCGWindowBounds") or {}
-        bw = float(b.get("Width", 0))
-        bh = float(b.get("Height", 0))
-        if bw < 200 or bh < 200:
+        if float(window.get("kCGWindowAlpha", 1) or 0) <= 0:
             continue
-        for sw, sh in screen_sizes:
-            if abs(bw - sw) < 2 and abs(bh - sh) < 2:
-                return True
-    return False
+        bounds = window.get("kCGWindowBounds") or {}
+        if any(_covers_screen(bounds, screen) for screen in screens):
+            return window
+    return None
+
+
+def is_any_app_fullscreen():
+    """Return True if any non-system app window covers a full screen."""
+    return find_fullscreen_window() is not None
 
 
 # ================= Pass-through subviews =================
@@ -214,6 +260,10 @@ class WidgetDelegate(NSObject):
         self.state = load_state()
         self.mode = self.state.get("mode", DEFAULT_MODE)
         self._hidden_by_fs = False
+        self._fs_missing_since = None
+        self._space_generation = 0
+        self._hidden_on_space_generation = None
+        self._logged_same_space_missing = False
         self._build_window()
         self._apply_mode(self.mode)
         self._build_menu()
@@ -393,19 +443,62 @@ class WidgetDelegate(NSObject):
 
     # ---------- Fullscreen auto-hide ----------
     def _spaceChanged_(self, notification):
+        self._space_generation += 1
+        _log(f"space changed: generation={self._space_generation}")
         self._apply_fullscreen_visibility()
 
     def _checkFullscreen_(self, timer):
         self._apply_fullscreen_visibility()
 
-    def _apply_fullscreen_visibility(self):
-        fs = is_any_app_fullscreen()
-        if fs and not self._hidden_by_fs:
-            self.window.orderOut_(None)
-            self._hidden_by_fs = True
-        elif not fs and self._hidden_by_fs:
+    def _restore_after_fullscreen(self):
+        """Show the widget again without stealing focus in normal mode."""
+        if self.mode == "normal":
+            self.window.orderBack_(None)
+        else:
             self.window.orderFrontRegardless()
+
+    def _apply_fullscreen_visibility(self):
+        fullscreen_window = find_fullscreen_window()
+
+        if fullscreen_window:
+            self._fs_missing_since = None
+            owner = fullscreen_window.get("kCGWindowOwnerName", "") or "unknown"
+            layer = fullscreen_window.get("kCGWindowLayer", "?")
+            bounds = fullscreen_window.get("kCGWindowBounds") or {}
+            if not self._hidden_by_fs:
+                _log(f"hide widget: fullscreen window owner={owner!r} layer={layer} bounds={bounds}")
+                self.window.orderOut_(None)
+                self._hidden_by_fs = True
+                self._hidden_on_space_generation = self._space_generation
+                self._logged_same_space_missing = False
+            return
+
+        if not self._hidden_by_fs:
+            return
+
+        # Quartz can intermittently miss browser/video fullscreen windows.
+        # Once hidden inside a fullscreen Space, stay hidden until macOS reports
+        # a Space change. Otherwise the widget flickers back over the video.
+        if self._space_generation == self._hidden_on_space_generation:
+            if not self._logged_same_space_missing:
+                _log("fullscreen window missing in the same Space; keep widget hidden")
+                self._logged_same_space_missing = True
+            return
+
+        now = datetime.now()
+        if self._fs_missing_since is None:
+            self._fs_missing_since = now
+            _log("fullscreen window missing after Space change; waiting before showing widget")
+            return
+
+        missing_for = (now - self._fs_missing_since).total_seconds()
+        if missing_for >= _FULLSCREEN_RESTORE_GRACE_SECONDS:
+            _log(f"show widget: fullscreen window gone after Space change for {missing_for:.1f}s")
+            self._restore_after_fullscreen()
             self._hidden_by_fs = False
+            self._fs_missing_since = None
+            self._hidden_on_space_generation = None
+            self._logged_same_space_missing = False
 
     # ---------- Refresh ----------
     def _tick_(self, timer):
